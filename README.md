@@ -6,18 +6,15 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 - Java 17, Spring Boot (Web, Thymeleaf, Data JPA)
 - Postgres (primary), H2 (dev if you switch URL)
 - yt-dlp for transcripts
-- OpenAI for questions and embeddings (dummy fallbacks available)
+- OpenAI for questions and embeddings
 
 ## Config
 `src/main/resources/application.properties` (or env vars):
 - `spring.datasource.url=jdbc:postgresql://localhost:5432/youtube_english_tutor`
 - `spring.datasource.username` / `spring.datasource.password` (set via env/local override)
-- `app.transcript.provider=ytdlp` (or `mock`)
 - `app.ytdlp.binary=yt-dlp` (path to yt-dlp)
-- `app.ai.provider=openai` (or `dummy`)
 - `app.openai.model=gpt-5.1`
 - `app.openai.api-key` (or `OPENAI_API_KEY`)
-- `app.embedding.provider=openai` (or `dummy`)
 - `app.openai.embedding-model=text-embedding-3-small`
 - RAG chunking: `app.rag.chunk-size=500`, `app.rag.chunk-overlap=100`, `app.rag.max-snippet-length=400`
 - Transcript download path: `app.download.default-path=downloads`
@@ -40,4 +37,4 @@ Postgres DDL: `db/postgres-schema.sql`
 
 ## Notes
 - Credentials are intentionally blank in `application.properties`; set via env or local overrides.
-- Network calls to OpenAI/yt-dlp must be reachable; switch providers to `mock`/`dummy` for offline testing.
+- Network calls to OpenAI/yt-dlp must be reachable.

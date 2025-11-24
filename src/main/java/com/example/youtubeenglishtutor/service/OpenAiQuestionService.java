@@ -16,14 +16,12 @@ import java.util.stream.StreamSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClient;
 
 @Service
-@ConditionalOnProperty(value = "app.ai.provider", havingValue = "openai")
 public class OpenAiQuestionService implements AiQuestionService {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAiQuestionService.class);
