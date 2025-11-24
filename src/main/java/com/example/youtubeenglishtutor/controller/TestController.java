@@ -59,7 +59,7 @@ public class TestController {
     }
 
     @GetMapping("/{id}")
-    public String takeTest(@PathVariable Long id, Model model) {
+    public String takeTest(@PathVariable("id") Long id, Model model) {
         Test test = testService.getTest(id);
         if (test == null) {
             return "redirect:/tests";
@@ -69,7 +69,7 @@ public class TestController {
     }
 
     @PostMapping("/{id}/submit")
-    public String submitAnswers(@PathVariable Long id, HttpServletRequest request, Model model) {
+    public String submitAnswers(@PathVariable("id") Long id, HttpServletRequest request, Model model) {
         Map<Long, List<String>> answers = extractAnswers(request);
         Test test = testService.submitAnswers(id, answers);
         if (test == null) {
@@ -89,7 +89,7 @@ public class TestController {
     }
 
     @GetMapping("/{id}/wrong-questions")
-    public String reviewWrongQuestions(@PathVariable Long id, Model model) {
+    public String reviewWrongQuestions(@PathVariable("id") Long id, Model model) {
         Test test = testService.getTest(id);
         if (test == null) {
             return "redirect:/tests";
