@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Take Test</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1 th:text="${test.videoTitle}">Test Title</h1>
+        <p>Answer the questions below.</p>
+
+        <form th:action="@{'/tests/' + ${test.id} + '/submit'}" method="post">
+            <div th:each="question, iterStat : ${test.questions}" class="question">
+                <p th:text="${iterStat.count} + '. ' + ${question.text}">Question text</p>
+                
+                <div class="options">
+                    <!-- SINGLE_CHOICE -->
+                    <div th:if="${question.type.name() == 'SINGLE_CHOICE'}">
+                        <div th:each="option : ${question.options.split(';')}">
+                            <input type="radio" th:name="'q_' + ${question.id}" th:value="${option}" th:id="'q' + ${question.id} + '-' + ${option}">
+                            <label th:for="'q' + ${question.id} + '-' + ${option}" th:text="${option}">Option</label>
+                        </div>
+                    </div>
+
+                    <!-- MULTIPLE_CHOICE -->
+                    <div th:if="${question.type.name() == 'MULTIPLE_CHOICE'}">
+                        <div th:each="option : ${question.options.split(';')}">
+                            <input type="checkbox" th:name="'q_' + ${question.id}" th:value="${option}" th:id="'q' + ${question.id} + '-' + ${option}">
+                            <label th:for="'q' + ${question.id} + '-' + ${option}" th:text="${option}">Option</label>
+                        </div>
+                    </div>
+
+                    <!-- TRUE_FALSE -->
+                    <div th:if="${question.type.name() == 'TRUE_FALSE'}">
+                        <div>
+                            <input type="radio" th:name="'q_' + ${question.id}" value="True" th:id="'q' + ${question.id} + '-true'">
+                            <label th:for="'q' + ${question.id} + '-true'">True</label>
+                        </div>
+                        <div>
+                            <input type="radio" th:name="'q_' + ${question.id}" value="False" th:id="'q' + ${question.id} + '-false'">
+                            <label th:for="'q' + ${question.id} + '-false'">False</label>
+                        </div>
+                    </div>
+
+                    <!-- FILL_IN_BLANK -->
+                    <div th:if="${question.type.name() == 'FILL_IN_BLANK'}">
+                        <input type="text" th:name="'q_' + ${question.id}">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="button">Submit Answers</button>
+        </form>
+    </div>
+</body>
+</html>

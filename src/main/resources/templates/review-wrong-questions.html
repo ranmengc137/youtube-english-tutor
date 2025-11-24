@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Review Wrong Questions</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>Reviewing Test for: <span th:text="${test.videoTitle}"></span></h1>
+        
+         <div class="result-summary">
+            <h2>Score: <span th:text="${test.score}"></span> / <span th:text="${test.totalQuestions}"></span></h2>
+        </div>
+
+        <h3>Incorrect Answers</h3>
+        <div th:if="${#lists.isEmpty(wrongQuestions)}">
+            <p>No wrong answers to review.</p>
+        </div>
+        <div class="wrong-answer-list" th:unless="${#lists.isEmpty(wrongQuestions)}">
+            <div th:each="wrongQuestion : ${wrongQuestions}" class="question">
+                <p th:text="${wrongQuestion.question.text}">Question text</p>
+                <p><strong>Correct Answer:</strong> <span class="correct-answer" th:text="${wrongQuestion.question.correctAnswer}"></span></p>
+                <p><strong>Your Answer:</strong> <span class="user-answer" th:text="${wrongQuestion.userAnswer}"></span></p>
+            </div>
+        </div>
+
+        <div class="home-actions">
+            <a href="/tests" class="button">Back to History</a>
+            <a href="/" class="button">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

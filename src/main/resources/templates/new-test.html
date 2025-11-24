@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Create New Test</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>Create a New Test</h1>
+        <p>Enter a YouTube video URL to generate a quiz.</p>
+        <form th:action="@{/tests}" method="post">
+            <div>
+                <label for="videoUrl">YouTube Video URL:</label>
+                <input type="url" id="videoUrl" name="videoUrl" required class="form-control">
+            </div>
+            <div>
+                <label for="downloadPath">Download Path (Optional):</label>
+                <input type="text" id="downloadPath" name="downloadPath" class="form-control">
+            </div>
+            <div>
+                <input type="checkbox" id="useDefaultPath" name="useDefaultPath" checked>
+                <label for="useDefaultPath">Use default download path</label>
+            </div>
+            <button type="submit" class="button">Generate Test</button>
+        </form>
+         <div style="margin-top: 20px;">
+            <a href="/" class="button">Back to Home</a>
+        </div>
+    </div>
+</body>
+</html>

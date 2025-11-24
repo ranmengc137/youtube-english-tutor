@@ -1,0 +1,32 @@
+CREATE TABLE IF NOT EXISTS tests (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP,
+    video_url TEXT,
+    video_title TEXT,
+    score INTEGER,
+    total_questions INTEGER,
+    transcript TEXT
+);
+
+CREATE TABLE IF NOT EXISTS questions (
+    id BIGSERIAL PRIMARY KEY,
+    test_id BIGINT REFERENCES tests(id) ON DELETE CASCADE,
+    type VARCHAR(50),
+    text TEXT,
+    options TEXT,
+    correct_answer TEXT
+);
+
+CREATE TABLE IF NOT EXISTS wrong_questions (
+    id BIGSERIAL PRIMARY KEY,
+    test_id BIGINT REFERENCES tests(id) ON DELETE CASCADE,
+    question_id BIGINT REFERENCES questions(id) ON DELETE CASCADE,
+    user_answer TEXT
+);
+
+CREATE TABLE IF NOT EXISTS transcript_chunks (
+    id BIGSERIAL PRIMARY KEY,
+    test_id BIGINT REFERENCES tests(id) ON DELETE CASCADE,
+    content TEXT,
+    embedding TEXT
+);

@@ -1,0 +1,8 @@
+target/
+.DS_Store
+downloads/
+*.log
+*.tmp
+*.iml
+.idea/
+/.vscode/

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Result</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <div class="container">
+        <h1>Test Result</h1>
+        
+        <div class="result-summary">
+            <h2>Your Score: <span th:text="${test.score}"></span> / <span th:text="${test.totalQuestions}"></span></h2>
+        </div>
+
+        <h3>Answers</h3>
+        <div th:each="question : ${test.questions}"
+             th:class="'question ' + (${wrongQuestionIds.contains(question.id)} ? 'wrong' : 'correct')">
+            <p th:text="${question.text}">Question text</p>
+            <p><strong>Correct Answer:</strong>
+                <span class="answer-correct" th:text="${question.correctAnswer}">Correct answer</span>
+            </p>
+            <p><strong>Your Answer:</strong>
+                <span th:class="${wrongQuestionIds.contains(question.id)} ? 'answer-wrong' : 'answer-correct'"
+                      th:text="${userAnswers[question.id] != null ? userAnswers[question.id] : 'Not answered'}">
+                    User answer
+                </span>
+            </p>
+            <div th:if="${wrongQuestionIds.contains(question.id)}" class="transcript-snippet">
+                <details>
+                    <summary>Transcript excerpt</summary>
+                    <pre th:utext="${snippets[question.id] != null ? snippets[question.id] : 'No transcript available'}"></pre>
+                </details>
+            </div>
+        </div>
+
+        <div class="home-actions">
+            <a href="/" class="button">Back to Home</a>
+            <a th:href="@{/tests}" class="button">View Test History</a>
+        </div>
+    </div>
+</body>
+</html>
