@@ -58,7 +58,7 @@ public class TestService {
     @Value("${app.video.max-seconds:1800}")
     private long maxVideoSeconds;
 
-    @Value("${app.video.enforce-limit:true}")
+    @Value("${app.video.enforce-limit}")
     private boolean enforceVideoLimit;
 
     public TestService(
