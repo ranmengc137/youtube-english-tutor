@@ -82,6 +82,11 @@ public class TestService {
     public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath) {
         String resolvedPath = resolveDownloadPath(downloadPath, useDefaultPath);
         log.info("Creating test for videoUrl={} using downloadPath={}", videoUrl, resolvedPath);
+        Optional<Test> existing = testRepository.findFirstByVideoUrlOrderByCreatedAtDesc(videoUrl);
+        if (existing.isPresent()) {
+            log.info("Reusing existing test {} for videoUrl={}", existing.get().getId(), videoUrl);
+            return existing.get();
+        }
         enforceDurationLimit(videoUrl);
         String transcript = fetchOrReuseTranscript(videoUrl, resolvedPath);
         log.debug("Transcript ready ({} chars)", transcript != null ? transcript.length() : 0);
