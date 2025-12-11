@@ -7,6 +7,7 @@ import com.example.youtubeenglishtutor.entity.WrongQuestion;
 import com.example.youtubeenglishtutor.repository.TestRepository;
 import com.example.youtubeenglishtutor.repository.TranscriptChunkRepository;
 import com.example.youtubeenglishtutor.repository.WrongQuestionRepository;
+import com.example.youtubeenglishtutor.service.VideoMetadataService;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -24,6 +25,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -31,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
+@RefreshScope
 public class TestService {
 
     private static final Logger log = LoggerFactory.getLogger(TestService.class);
@@ -41,6 +44,7 @@ public class TestService {
     private final TranscriptService transcriptService;
     private final RagService ragService;
     private final TranscriptChunkRepository chunkRepository;
+    private final VideoMetadataService videoMetadataService;
 
     @Value("${app.download.default-path:downloads}")
     private String defaultDownloadPath;
@@ -51,25 +55,34 @@ public class TestService {
     @Value("${app.rag.chunk-overlap:100}")
     private int chunkOverlap;
 
+    @Value("${app.video.max-seconds:1800}")
+    private long maxVideoSeconds;
+
+    @Value("${app.video.enforce-limit:true}")
+    private boolean enforceVideoLimit;
+
     public TestService(
             TestRepository testRepository,
             WrongQuestionRepository wrongQuestionRepository,
             AiQuestionService aiQuestionService,
             TranscriptService transcriptService,
             RagService ragService,
-            TranscriptChunkRepository chunkRepository) {
+            TranscriptChunkRepository chunkRepository,
+            VideoMetadataService videoMetadataService) {
         this.testRepository = testRepository;
         this.wrongQuestionRepository = wrongQuestionRepository;
         this.aiQuestionService = aiQuestionService;
         this.transcriptService = transcriptService;
         this.ragService = ragService;
         this.chunkRepository = chunkRepository;
+        this.videoMetadataService = videoMetadataService;
     }
 
     @Transactional
     public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath) {
         String resolvedPath = resolveDownloadPath(downloadPath, useDefaultPath);
         log.info("Creating test for videoUrl={} using downloadPath={}", videoUrl, resolvedPath);
+        enforceDurationLimit(videoUrl);
         String transcript = fetchOrReuseTranscript(videoUrl, resolvedPath);
         log.debug("Transcript ready ({} chars)", transcript != null ? transcript.length() : 0);
 
@@ -164,6 +177,20 @@ public class TestService {
             return defaultDownloadPath;
         }
         return downloadPath;
+    }
+
+    private void enforceDurationLimit(String videoUrl) {
+        if (!enforceVideoLimit) {
+            log.info("Video length enforcement disabled; skipping duration check for {}", videoUrl);
+            return;
+        }
+        long duration = videoMetadataService.getDurationSeconds(videoUrl);
+        if (duration <= 0) {
+            throw new IllegalArgumentException("Unable to determine video length. Ensure yt-dlp is available and use videos up to " + (maxVideoSeconds / 60) + " minutes.");
+        }
+        if (duration > maxVideoSeconds) {
+            throw new IllegalArgumentException("Video is longer than allowed limit of " + (maxVideoSeconds / 60) + " minutes.");
+        }
     }
 
     private String fetchOrReuseTranscript(String videoUrl, String downloadPath) {

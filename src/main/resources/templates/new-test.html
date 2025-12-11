@@ -6,27 +6,43 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
-        <h1>Create a New Test</h1>
-        <p>Enter a YouTube video URL to generate a quiz.</p>
-        <form th:action="@{/tests}" method="post">
-            <div>
-                <label for="videoUrl">YouTube Video URL:</label>
-                <input type="url" id="videoUrl" name="videoUrl" required class="form-control">
-            </div>
-            <div>
-                <label for="downloadPath">Download Path (Optional):</label>
-                <input type="text" id="downloadPath" name="downloadPath" class="form-control">
-            </div>
-            <div>
-                <input type="checkbox" id="useDefaultPath" name="useDefaultPath" checked>
-                <label for="useDefaultPath">Use default download path</label>
-            </div>
-            <button type="submit" class="button">Generate Test</button>
-        </form>
-         <div style="margin-top: 20px;">
-            <a href="/" class="button">Back to Home</a>
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
         </div>
     </div>
+
+    <div class="card">
+        <h1>Create a New Test</h1>
+        <p class="muted">Paste a YouTube URL, we’ll pull the transcript and generate questions.</p>
+        <div th:if="${error}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fecaca;">
+            <span th:text="${error}">Error message</span>
+        </div>
+        <form th:action="@{/tests}" method="post">
+            <div class="form-field">
+                <label for="videoUrl">YouTube Video URL</label>
+                <input type="url" id="videoUrl" name="videoUrl" required class="input" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div class="form-field">
+                <label for="downloadPath">Download Path (Optional)</label>
+                <input type="text" id="downloadPath" name="downloadPath" class="input" placeholder="defaults to /downloads">
+            </div>
+            <div class="form-field">
+                <label>
+                    <input type="checkbox" id="useDefaultPath" name="useDefaultPath" checked>
+                    Use default download path
+                </label>
+            </div>
+            <div class="home-actions">
+                <button type="submit" class="button">Generate Test</button>
+                <a href="/" class="button secondary">Back to Home</a>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>

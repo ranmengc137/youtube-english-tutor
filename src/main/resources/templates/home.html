@@ -6,13 +6,40 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome to YouTube English Tutor</h1>
-        <p>Learn English by taking quizzes generated from YouTube videos.</p>
-        <div class="home-actions">
-            <a href="/tests/new" class="button">Create New Test</a>
-            <a href="/tests" class="button">View Test History</a>
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
         </div>
     </div>
+
+    <div class="hero">
+        <p class="pill">Learn faster</p>
+        <h1>Turn YouTube videos into smart quizzes.</h1>
+        <p>Paste a video link, generate questions with AI, and review with transcript-aware snippets.</p>
+        <div class="home-actions">
+            <a href="/tests/new" class="button">Create New Test</a>
+            <a href="/tests" class="button secondary">View Test History</a>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>How it works</h3>
+            <p class="muted">We pull the transcript with yt-dlp, generate questions via OpenAI, and show relevant transcript excerpts when you miss one.</p>
+        </div>
+        <div class="card">
+            <h3>Stay on track</h3>
+            <p class="muted">Review past scores in History and focus on the snippets highlighted with the correct answers.</p>
+        </div>
+        <div class="card">
+            <h3>Limitations</h3>
+            <p class="muted">Videos longer than 30 minutes are not allowed. Ensure yt-dlp and OpenAI are configured for transcript and quiz generation.</p>
+        </div>
+    </div>
+</div>
 </body>
 </html>

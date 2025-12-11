@@ -6,9 +6,19 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+        </div>
+    </div>
+
+    <div class="card">
         <h1 th:text="${test.videoTitle}">Test Title</h1>
-        <p>Answer the questions below.</p>
+        <p class="muted">Answer the questions below.</p>
 
         <form th:action="@{'/tests/' + ${test.id} + '/submit'}" method="post">
             <div th:each="question, iterStat : ${test.questions}" class="question">
@@ -45,13 +55,17 @@
 
                     <!-- FILL_IN_BLANK -->
                     <div th:if="${question.type.name() == 'FILL_IN_BLANK'}">
-                        <input type="text" th:name="'q_' + ${question.id}">
+                        <input type="text" th:name="'q_' + ${question.id}" class="input">
                     </div>
                 </div>
             </div>
 
-            <button type="submit" class="button">Submit Answers</button>
+            <div class="home-actions">
+                <button type="submit" class="button">Submit Answers</button>
+                <a href="/" class="button secondary">Back to Home</a>
+            </div>
         </form>
     </div>
+</div>
 </body>
 </html>

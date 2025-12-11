@@ -6,7 +6,17 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+        </div>
+    </div>
+
+    <div class="card">
         <h1>Test History</h1>
         
         <table th:if="${!tests.isEmpty()}">
@@ -24,20 +34,21 @@
                     <td th:text="${test.videoUrl}"></td>
                     <td th:text="${test.score == null ? 'Pending' : test.score + ' / ' + test.totalQuestions}"></td>
                     <td>
-                        <a th:href="@{'/tests/' + ${test.id}}" class="button">Take / Retake</a>
-                        <a th:href="@{'/tests/' + ${test.id} + '/wrong-questions'}" class="button">Review Wrong</a>
+                        <a th:href="@{'/tests/' + ${test.id}}" class="button secondary">Take / Retake</a>
+                        <a th:href="@{'/tests/' + ${test.id} + '/wrong-questions'}" class="button secondary">Review Wrong</a>
                     </td>
                 </tr>
             </tbody>
         </table>
 
         <div th:if="${tests.isEmpty()}">
-            <p>No tests taken yet.</p>
+            <p class="muted">No tests taken yet.</p>
         </div>
 
         <div class="home-actions">
             <a href="/" class="button">Back to Home</a>
         </div>
     </div>
+</div>
 </body>
 </html>

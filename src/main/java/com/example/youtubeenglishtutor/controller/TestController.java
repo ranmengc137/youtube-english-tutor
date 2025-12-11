@@ -52,10 +52,15 @@ public class TestController {
     public String createTest(
             @RequestParam("videoUrl") String videoUrl,
             @RequestParam(value = "downloadPath", required = false) String downloadPath,
-            @RequestParam(value = "useDefaultPath", defaultValue = "false") boolean useDefaultPath) {
-
-        Test test = testService.createTest(videoUrl, downloadPath, useDefaultPath);
-        return "redirect:/tests/" + test.getId();
+            @RequestParam(value = "useDefaultPath", defaultValue = "false") boolean useDefaultPath,
+            Model model) {
+        try {
+            Test test = testService.createTest(videoUrl, downloadPath, useDefaultPath);
+            return "redirect:/tests/" + test.getId();
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("error", ex.getMessage());
+            return "new-test";
+        }
     }
 
     @GetMapping("/{id}")

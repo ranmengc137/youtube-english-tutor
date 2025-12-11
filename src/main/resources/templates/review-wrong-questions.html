@@ -6,7 +6,17 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+        </div>
+    </div>
+
+    <div class="card">
         <h1>Reviewing Test for: <span th:text="${test.videoTitle}"></span></h1>
         
          <div class="result-summary">
@@ -15,10 +25,10 @@
 
         <h3>Incorrect Answers</h3>
         <div th:if="${#lists.isEmpty(wrongQuestions)}">
-            <p>No wrong answers to review.</p>
+            <p class="muted">No wrong answers to review.</p>
         </div>
         <div class="wrong-answer-list" th:unless="${#lists.isEmpty(wrongQuestions)}">
-            <div th:each="wrongQuestion : ${wrongQuestions}" class="question">
+            <div th:each="wrongQuestion : ${wrongQuestions}" class="question wrong">
                 <p th:text="${wrongQuestion.question.text}">Question text</p>
                 <p><strong>Correct Answer:</strong> <span class="correct-answer" th:text="${wrongQuestion.question.correctAnswer}"></span></p>
                 <p><strong>Your Answer:</strong> <span class="user-answer" th:text="${wrongQuestion.userAnswer}"></span></p>
@@ -26,9 +36,10 @@
         </div>
 
         <div class="home-actions">
-            <a href="/tests" class="button">Back to History</a>
+            <a href="/tests" class="button secondary">Back to History</a>
             <a href="/" class="button">Back to Home</a>
         </div>
     </div>
+</div>
 </body>
 </html>

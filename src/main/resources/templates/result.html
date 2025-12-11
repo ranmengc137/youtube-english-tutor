@@ -6,9 +6,18 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-    <div class="container">
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+        </div>
+    </div>
+
+    <div class="card">
         <h1>Test Result</h1>
-        
         <div class="result-summary">
             <h2>Your Score: <span th:text="${test.score}"></span> / <span th:text="${test.totalQuestions}"></span></h2>
         </div>
@@ -36,8 +45,9 @@
 
         <div class="home-actions">
             <a href="/" class="button">Back to Home</a>
-            <a th:href="@{/tests}" class="button">View Test History</a>
+            <a th:href="@{/tests}" class="button secondary">View Test History</a>
         </div>
     </div>
+</div>
 </body>
 </html>
