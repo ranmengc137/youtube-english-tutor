@@ -1,7 +1,6 @@
 package com.example.youtubeenglishtutor.service;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,8 +19,8 @@ public class OpenAiEmbeddingService implements EmbeddingService {
     private final String model;
 
     public OpenAiEmbeddingService(
-            @Value("${app.openai.api-key:}") String apiKey,
-            @Value("${app.openai.embedding-model:text-embedding-3-small}") String model) {
+            @Value("${app.openai.api-key}") String apiKey,
+            @Value("${app.openai.embedding-model}") String model) {
         this.model = model;
         String resolvedKey = resolveApiKey(apiKey);
         this.restClient = RestClient.builder()
