@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/tests")
@@ -105,10 +106,12 @@ public class TestController {
     public String submitFeedback(
             @PathVariable("id") Long id,
             @RequestParam(value = "rating", required = false) String rating,
-            @RequestParam(value = "comment", required = false) String comment) {
+            @RequestParam(value = "comment", required = false) String comment,
+            RedirectAttributes redirectAttributes) {
         String learnerId = learnerContext.getCurrentLearnerId();
         String combined = (rating != null ? rating + " " : "") + (comment != null ? comment : "");
         observabilityService.logFeedback(learnerId, id, null, combined.trim(), rating);
+        redirectAttributes.addFlashAttribute("feedbackSuccess", true);
         return "redirect:/tests/" + id + "/result";
     }
 
@@ -116,9 +119,11 @@ public class TestController {
     public String flagQuestion(
             @PathVariable("id") Long id,
             @RequestParam("questionId") Long questionId,
-            @RequestParam(value = "reason", required = false) String reason) {
+            @RequestParam(value = "reason", required = false) String reason,
+            RedirectAttributes redirectAttributes) {
         String learnerId = learnerContext.getCurrentLearnerId();
         observabilityService.logFeedback(learnerId, id, questionId, reason, "QUESTION_FLAG");
+        redirectAttributes.addFlashAttribute("flagSuccess", true);
         return "redirect:/tests/" + id + "/result";
     }
 

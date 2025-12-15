@@ -22,6 +22,12 @@
         <div class="result-summary">
             <h2>Your Score: <span th:text="${test.score}"></span> / <span th:text="${test.totalQuestions}"></span></h2>
         </div>
+        <div th:if="${feedbackSuccess}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #16a34a;">
+            Feedback submitted. Thank you!
+        </div>
+        <div th:if="${flagSuccess}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4); color: #2563eb;">
+            Flag received. We’ll review this question.
+        </div>
 
         <h3>Answers</h3>
         <div th:each="question : ${test.questions}"
