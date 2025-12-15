@@ -112,7 +112,7 @@ public class TestController {
         String combined = (rating != null ? rating + " " : "") + (comment != null ? comment : "");
         observabilityService.logFeedback(learnerId, id, null, combined.trim(), rating);
         redirectAttributes.addFlashAttribute("feedbackSuccess", true);
-        return "redirect:/tests/" + id + "/result";
+        return "redirect:/tests/" + id + "/result#feedback";
     }
 
     @PostMapping("/{id}/flag")
@@ -124,7 +124,7 @@ public class TestController {
         String learnerId = learnerContext.getCurrentLearnerId();
         observabilityService.logFeedback(learnerId, id, questionId, reason, "QUESTION_FLAG");
         redirectAttributes.addFlashAttribute("flagSuccess", true);
-        return "redirect:/tests/" + id + "/result";
+        return "redirect:/tests/" + id + "/result#feedback";
     }
 
     @PostMapping("/{id}/regenerate")
