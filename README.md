@@ -21,6 +21,12 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 - Metrics export dir: `app.metrics.export-dir=logs`
 - Application log file: defaults to `logs/spring.log` (set via `logging.file.path=logs`)
 
+## Recent Changes
+
+- 2025-12-15: Result page UX — feedback and flag now show centered toast popups styled to match the app; scroll position is preserved after submitting feedback/flag.
+- 2025-12-15: Logging — enabled file logging to `logs/spring.log`, set root level to INFO, and silenced Spring Boot condition-evaluation reports to reduce log noise.
+- 2025-12-15: Metrics export — default CSV export directory set to `logs/` (configurable via `app.metrics.export-dir`).
+
 ## Schema
 Postgres DDL: `db/postgres-schema.sql`
 - `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`
