@@ -28,7 +28,7 @@ public class MetricsExportService {
 
     private final ObservabilityEventRepository repository;
 
-    @Value("${app.metrics.export-dir:metrics-exports}")
+    @Value("${app.metrics.export-dir:logs}")
     private String exportDir;
 
     public MetricsExportService(ObservabilityEventRepository repository) {

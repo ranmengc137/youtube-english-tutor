@@ -22,12 +22,6 @@
         <div class="result-summary">
             <h2>Your Score: <span th:text="${test.score}"></span> / <span th:text="${test.totalQuestions}"></span></h2>
         </div>
-        <div th:if="${feedbackSuccess}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #16a34a;">
-            Feedback submitted. Thank you!
-        </div>
-        <div th:if="${flagSuccess}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4); color: #2563eb;">
-            Flag received. We’ll review this question.
-        </div>
 
         <h3>Answers</h3>
         <div th:each="question : ${test.questions}"
@@ -50,6 +44,7 @@
             </div>
 
             <form th:action="@{'/tests/' + ${test.id} + '/flag'}" method="post" style="margin-top: 8px;">
+                <input type="hidden" name="scrollY" value="0">
                 <input type="hidden" name="questionId" th:value="${question.id}">
                 <label class="muted" style="font-size: 12px;">Flag this question</label>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
@@ -61,13 +56,8 @@
 
         <div class="card" id="feedback" style="margin-top: 16px;">
             <h3>Feedback & regenerate</h3>
-            <div th:if="${feedbackSuccess}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.4); color: #16a34a;">
-                Feedback submitted. Thank you!
-            </div>
-            <div th:if="${flagSuccess}" style="margin: 10px 0; padding: 10px; border-radius: 8px; background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.4); color: #2563eb;">
-                Flag received. We’ll review this question.
-            </div>
             <form th:action="@{'/tests/' + ${test.id} + '/feedback'}" method="post" style="margin-bottom: 12px;">
+                <input type="hidden" name="scrollY" value="0">
                 <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                     <label class="muted">Overall difficulty:</label>
                     <select name="rating" class="input" style="max-width: 200px;">
@@ -98,16 +88,51 @@
         </div>
     </div>
 </div>
-<script>
+</div>
+</div>
+<div id="toast" style="display:none; position: fixed; left:50%; top:50%; transform: translate(-50%, -50%); z-index: 9999; min-width: 280px; max-width: 420px; background: #0f172a; color: #e2e8f0; padding: 16px 18px; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 15px;">
+    <div id="toast-message"></div>
+    <button id="toast-close" class="button secondary" style="margin-top: 12px; padding: 8px 14px; width: 100%;">Close</button>
+</div>
+<script th:inline="javascript">
     (function() {
-        // If redirected with #feedback, ensure we scroll into view and focus the card.
-        const hash = window.location.hash;
-        if (hash === '#feedback') {
-            const el = document.getElementById('feedback');
-            if (el) {
-                el.scrollIntoView({behavior: 'smooth', block: 'start'});
-            }
+        var feedbackSuccess = /*[[${feedbackSuccess}]]*/ false;
+        var flagSuccess = /*[[${flagSuccess}]]*/ false;
+        var toast = document.getElementById('toast');
+        var toastMsg = document.getElementById('toast-message');
+        var toastClose = document.getElementById('toast-close');
+        var scrollToPos = /*[[${scrollTo}]]*/ 0;
+
+        function showToast(message) {
+            toastMsg.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(function() {
+                toast.style.opacity = '1';
+            }, 10);
         }
+
+        if (feedbackSuccess) {
+            showToast('Feedback submitted. Thank you!');
+        } else if (flagSuccess) {
+            showToast('Flag received. We’ll review this question.');
+        }
+
+        toastClose.addEventListener('click', function() {
+            toast.style.display = 'none';
+        });
+
+        // Preserve scroll position after server round-trips.
+        if (scrollToPos && scrollToPos > 0) {
+            window.scrollTo({ top: scrollToPos, behavior: 'auto' });
+        }
+        var forms = document.querySelectorAll('form');
+        forms.forEach(function(f) {
+            var hidden = f.querySelector('input[name="scrollY"]');
+            if (!hidden) return;
+            f.addEventListener('submit', function() {
+                hidden.value = window.scrollY || window.pageYOffset || 0;
+            });
+        });
     })();
 </script>
 </body>

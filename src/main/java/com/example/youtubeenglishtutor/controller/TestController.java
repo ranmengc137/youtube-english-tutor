@@ -107,12 +107,20 @@ public class TestController {
             @PathVariable("id") Long id,
             @RequestParam(value = "rating", required = false) String rating,
             @RequestParam(value = "comment", required = false) String comment,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "scrollY", required = false, defaultValue = "0") long scrollY,
+            RedirectAttributes redirectAttributes,
+            Model model) {
         String learnerId = learnerContext.getCurrentLearnerId();
         String combined = (rating != null ? rating + " " : "") + (comment != null ? comment : "");
         observabilityService.logFeedback(learnerId, id, null, combined.trim(), rating);
-        redirectAttributes.addFlashAttribute("feedbackSuccess", true);
-        return "redirect:/tests/" + id + "/result#feedback";
+        Test test = testService.getTest(id);
+        if (test == null) {
+            return "redirect:/tests";
+        }
+        populateResultModel(test, null, model);
+        model.addAttribute("feedbackSuccess", true);
+        model.addAttribute("scrollTo", scrollY);
+        return "result";
     }
 
     @PostMapping("/{id}/flag")
@@ -120,11 +128,19 @@ public class TestController {
             @PathVariable("id") Long id,
             @RequestParam("questionId") Long questionId,
             @RequestParam(value = "reason", required = false) String reason,
-            RedirectAttributes redirectAttributes) {
+            @RequestParam(value = "scrollY", required = false, defaultValue = "0") long scrollY,
+            RedirectAttributes redirectAttributes,
+            Model model) {
         String learnerId = learnerContext.getCurrentLearnerId();
         observabilityService.logFeedback(learnerId, id, questionId, reason, "QUESTION_FLAG");
-        redirectAttributes.addFlashAttribute("flagSuccess", true);
-        return "redirect:/tests/" + id + "/result#feedback";
+        Test test = testService.getTest(id);
+        if (test == null) {
+            return "redirect:/tests";
+        }
+        populateResultModel(test, null, model);
+        model.addAttribute("flagSuccess", true);
+        model.addAttribute("scrollTo", scrollY);
+        return "result";
     }
 
     @PostMapping("/{id}/regenerate")

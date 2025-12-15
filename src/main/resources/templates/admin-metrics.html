@@ -87,7 +87,7 @@
     <div class="card" style="margin-top: 22px;">
         <h3>Daily export</h3>
         <p class="muted">
-            A CSV is written every night to <code th:text="${'${app.metrics.export-dir:metrics-exports}'}">metrics-exports</code> as
+            A CSV is written every night to <code th:text="${'${app.metrics.export-dir:logs}'}">logs</code> as
             <code>observability-YYYY-MM-DD.csv</code>. Adjust with <code>app.metrics.export-dir</code>.
         </p>
         <form method="get" action="/admin/metrics/export" class="export-form">
