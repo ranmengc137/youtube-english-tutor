@@ -4,9 +4,11 @@ import com.example.youtubeenglishtutor.entity.Question;
 import com.example.youtubeenglishtutor.entity.QuestionType;
 import com.example.youtubeenglishtutor.entity.Test;
 import com.example.youtubeenglishtutor.entity.WrongQuestion;
+import com.example.youtubeenglishtutor.service.ObservabilityService;
 import com.example.youtubeenglishtutor.repository.TestRepository;
 import com.example.youtubeenglishtutor.repository.TranscriptChunkRepository;
 import com.example.youtubeenglishtutor.repository.WrongQuestionRepository;
+import com.example.youtubeenglishtutor.web.LearnerContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -42,6 +44,8 @@ public class TestService {
     private final RagService ragService;
     private final TranscriptChunkRepository chunkRepository;
     private final VideoMetadataService videoMetadataService;
+    private final ObservabilityService observabilityService;
+    private final LearnerContext learnerContext;
 
     @Value("${app.download.default-path:downloads}")
     private String defaultDownloadPath;
@@ -65,7 +69,9 @@ public class TestService {
             TranscriptService transcriptService,
             RagService ragService,
             TranscriptChunkRepository chunkRepository,
-            VideoMetadataService videoMetadataService) {
+            VideoMetadataService videoMetadataService,
+            ObservabilityService observabilityService,
+            LearnerContext learnerContext) {
         this.testRepository = testRepository;
         this.wrongQuestionRepository = wrongQuestionRepository;
         this.aiQuestionService = aiQuestionService;
@@ -73,6 +79,8 @@ public class TestService {
         this.ragService = ragService;
         this.chunkRepository = chunkRepository;
         this.videoMetadataService = videoMetadataService;
+        this.observabilityService = observabilityService;
+        this.learnerContext = learnerContext;
     }
 
     @Transactional
@@ -93,7 +101,7 @@ public class TestService {
         test.setVideoTitle("YouTube Video");
         test.setTranscript(transcript);
 
-        List<Question> generatedQuestions = aiQuestionService.generateQuestionsFromTranscript(transcript);
+        List<Question> generatedQuestions = aiQuestionService.generateQuestionsFromTranscript(transcript, DifficultyLevel.NORMAL);
         generatedQuestions.forEach(test::addQuestion);
         test.setTotalQuestions(generatedQuestions.size());
         test = testRepository.save(test);
@@ -126,6 +134,7 @@ public class TestService {
 
         int score = 0;
         List<Question> questions = test.getQuestions();
+        String learnerId = learnerContext.getCurrentLearnerId();
         for (Question question : questions) {
             List<String> submittedAnswers = answersByQuestionId.getOrDefault(question.getId(), Collections.emptyList());
             boolean correct = evaluateAnswer(question, submittedAnswers);
@@ -138,10 +147,40 @@ public class TestService {
                 wrongQuestion.setUserAnswer(String.join(";", submittedAnswers));
                 test.addWrongQuestion(wrongQuestion);
             }
+            // Log judge outcome per question for observability.
+            observabilityService.logJudgeEvent(
+                    learnerId,
+                    testId,
+                    question.getId(),
+                    correct ? "CORRECT" : "INCORRECT",
+                    String.join(";", submittedAnswers));
         }
 
         test.setScore(score);
         test.setTotalQuestions(questions.size());
+        return testRepository.save(test);
+    }
+
+    @Transactional
+    public Test regenerateTest(Long testId, DifficultyLevel difficulty) {
+        Test test = testRepository.findById(testId).orElse(null);
+        if (test == null) {
+            log.warn("regenerateTest: test not found id={}", testId);
+            return null;
+        }
+        if (!StringUtils.hasText(test.getTranscript())) {
+            throw new IllegalStateException("Transcript missing; cannot regenerate. Please recreate the test.");
+        }
+
+        wrongQuestionRepository.deleteByTestId(testId);
+        test.getWrongQuestions().clear();
+        test.getQuestions().clear();
+        test.setScore(null);
+        test.setTotalQuestions(null);
+
+        List<Question> regenerated = aiQuestionService.generateQuestionsFromTranscript(test.getTranscript(), difficulty);
+        regenerated.forEach(test::addQuestion);
+        test.setTotalQuestions(regenerated.size());
         return testRepository.save(test);
     }
 
@@ -188,7 +227,7 @@ public class TestService {
         }
         long duration = videoMetadataService.getDurationSeconds(videoUrl);
         if (duration <= 0) {
-            throw new IllegalArgumentException("Unable to determine video length. Ensure yt-dlp is available and use videos up to " + (maxVideoSeconds / 60) + " minutes.");
+            throw new IllegalArgumentException("Unable to determine video length. Ensure yt-dlp is available and use videos up to " + (maxVideoSeconds / 60) + " minutes. Check that yt-dlp is on PATH and returns --get-duration output without errors.");
         }
         if (duration > maxVideoSeconds) {
             throw new IllegalArgumentException("Video is longer than allowed limit of " + (maxVideoSeconds / 60) + " minutes.");

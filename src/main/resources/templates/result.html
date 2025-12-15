@@ -13,6 +13,7 @@
             <a href="/">Home</a>
             <a href="/tests/new">New Test</a>
             <a href="/tests">History</a>
+            <a href="/admin/metrics">Metrics</a>
         </div>
     </div>
 
@@ -41,6 +42,42 @@
                     <pre th:utext="${snippets[question.id] != null ? snippets[question.id] : 'No transcript available'}"></pre>
                 </details>
             </div>
+
+            <form th:action="@{'/tests/' + ${test.id} + '/flag'}" method="post" style="margin-top: 8px;">
+                <input type="hidden" name="questionId" th:value="${question.id}">
+                <label class="muted" style="font-size: 12px;">Flag this question</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <input type="text" name="reason" class="input" placeholder="e.g. too easy / unclear / wrong answer" style="max-width: 320px;">
+                    <button type="submit" class="button secondary" style="padding: 8px 12px;">Flag</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="card" style="margin-top: 16px;">
+            <h3>Feedback & regenerate</h3>
+            <form th:action="@{'/tests/' + ${test.id} + '/feedback'}" method="post" style="margin-bottom: 12px;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <label class="muted">Overall difficulty:</label>
+                    <select name="rating" class="input" style="max-width: 200px;">
+                        <option value="good" selected>Good fit</option>
+                        <option value="too_easy">Too easy</option>
+                        <option value="too_hard">Too hard</option>
+                    </select>
+                    <input type="text" name="comment" class="input" placeholder="Optional comment" style="max-width: 320px;">
+                    <button type="submit" class="button secondary" style="padding: 10px 14px;">Submit feedback</button>
+                </div>
+            </form>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <form th:action="@{'/tests/' + ${test.id} + '/regenerate'}" method="post">
+                    <input type="hidden" name="difficulty" value="EASIER">
+                    <button type="submit" class="button secondary" style="padding: 10px 14px;">Regenerate easier</button>
+                </form>
+                <form th:action="@{'/tests/' + ${test.id} + '/regenerate'}" method="post">
+                    <input type="hidden" name="difficulty" value="HARDER">
+                    <button type="submit" class="button" style="padding: 10px 14px;">Regenerate harder</button>
+                </form>
+            </div>
+            <p class="muted" style="margin-top: 8px;">Regeneration reuses the transcript and replaces questions with a new set at the chosen difficulty.</p>
         </div>
 
         <div class="home-actions">

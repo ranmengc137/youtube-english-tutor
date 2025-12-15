@@ -278,3 +278,13 @@ mark {
     color: var(--muted);
     font-size: 12px;
 }
+
+.stat {
+    font-size: 32px;
+    font-weight: 700;
+    margin: 6px 0 4px 0;
+}
+
+.table {
+    overflow-x: auto;
+}

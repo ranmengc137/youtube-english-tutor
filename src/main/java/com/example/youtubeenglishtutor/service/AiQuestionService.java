@@ -4,5 +4,9 @@ import com.example.youtubeenglishtutor.entity.Question;
 import java.util.List;
 
 public interface AiQuestionService {
-    List<Question> generateQuestionsFromTranscript(String transcript);
+    default List<Question> generateQuestionsFromTranscript(String transcript) {
+        return generateQuestionsFromTranscript(transcript, DifficultyLevel.NORMAL);
+    }
+
+    List<Question> generateQuestionsFromTranscript(String transcript, DifficultyLevel difficulty);
 }

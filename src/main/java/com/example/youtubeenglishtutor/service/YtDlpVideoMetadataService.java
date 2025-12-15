@@ -25,14 +25,17 @@ public class YtDlpVideoMetadataService implements VideoMetadataService {
                     "--no-playlist",
                     videoUrl
             );
-            Process process = new ProcessBuilder(command).start();
+            Process process = new ProcessBuilder(command)
+                    .redirectErrorStream(true) // merge stderr to avoid losing duration line amid warnings
+                    .start();
             int exit = process.waitFor();
-            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8).trim();
-            if (exit != 0 || !StringUtils.hasText(output)) {
-                log.warn("yt-dlp duration lookup failed exit={} output={}", exit, output);
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            String durationLine = extractDurationLine(output);
+            if (exit != 0 || !StringUtils.hasText(durationLine)) {
+                log.warn("yt-dlp duration lookup failed exit={} rawOutput={}", exit, output);
                 return -1;
             }
-            return parseDuration(output);
+            return parseDuration(durationLine.trim());
         } catch (Exception e) {
             log.warn("Failed to query duration via yt-dlp for {}", videoUrl, e);
             return -1;
@@ -58,5 +61,23 @@ public class YtDlpVideoMetadataService implements VideoMetadataService {
             log.warn("Unable to parse duration string: {}", duration);
             return -1;
         }
+    }
+
+    private String extractDurationLine(String rawOutput) {
+        if (!StringUtils.hasText(rawOutput)) {
+            return null;
+        }
+        String durationLine = null;
+        for (String line : rawOutput.split("\\R")) {
+            String trimmed = line.trim();
+            if (!StringUtils.hasText(trimmed)) {
+                continue;
+            }
+            // pick the last line that looks like a duration; yt-dlp may emit warnings first.
+            if (trimmed.matches("^\\d+$") || trimmed.matches("^\\d{1,2}:\\d{2}(:\\d{2})?$")) {
+                durationLine = trimmed;
+            }
+        }
+        return durationLine;
     }
 }

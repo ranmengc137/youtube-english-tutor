@@ -4,8 +4,13 @@ import com.example.youtubeenglishtutor.entity.Question;
 import com.example.youtubeenglishtutor.entity.Test;
 import com.example.youtubeenglishtutor.entity.TranscriptChunk;
 import com.example.youtubeenglishtutor.repository.TranscriptChunkRepository;
+import com.example.youtubeenglishtutor.web.LearnerContext;
+import com.example.youtubeenglishtutor.service.ObservabilityService;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,27 +21,50 @@ public class RagService {
 
     private final TranscriptChunkRepository chunkRepository;
     private final EmbeddingService embeddingService;
+    private final ObservabilityService observabilityService;
+    private final LearnerContext learnerContext;
     private final int maxSnippetLength;
 
     public RagService(
             TranscriptChunkRepository chunkRepository,
             EmbeddingService embeddingService,
+            ObservabilityService observabilityService,
+            LearnerContext learnerContext,
             @Value("${app.rag.max-snippet-length:400}") int maxSnippetLength) {
         this.chunkRepository = chunkRepository;
         this.embeddingService = embeddingService;
+        this.observabilityService = observabilityService;
+        this.learnerContext = learnerContext;
         this.maxSnippetLength = maxSnippetLength;
     }
 
     public String findBestSnippet(Test test, Question question) {
+        long start = System.nanoTime();
         List<TranscriptChunk> chunks = chunkRepository.findByTestId(test.getId());
         if (chunks.isEmpty()) {
             return "No transcript available";
         }
         String queryText = buildQuery(question);
         List<Double> queryEmbedding = embeddingService.embed(queryText);
-        TranscriptChunk best = chunks.stream()
-                .max(Comparator.comparingDouble(chunk -> cosine(queryEmbedding, parseEmbedding(chunk.getEmbedding()))))
-                .orElse(null);
+        List<ScoredChunk> scored = new ArrayList<>();
+        for (TranscriptChunk chunk : chunks) {
+            double score = cosine(queryEmbedding, parseEmbedding(chunk.getEmbedding()));
+            scored.add(new ScoredChunk(chunk, score));
+        }
+        scored.sort(Comparator.comparingDouble(ScoredChunk::score).reversed());
+        TranscriptChunk best = scored.isEmpty() ? null : scored.get(0).chunk();
+
+        long latencyMs = Duration.ofNanos(System.nanoTime() - start).toMillis();
+        // Capture retrieval observability without blocking user flow.
+        observabilityService.logRetrievalEvent(
+                learnerContext.getCurrentLearnerId(),
+                test.getId(),
+                question.getId(),
+                toPayload(scored, 5),
+                latencyMs,
+                best == null,
+                "VECTOR");
+
         if (best == null || !StringUtils.hasText(best.getContent())) {
             return "No transcript available";
         }
@@ -134,5 +162,19 @@ public class RagService {
             return text;
         }
         return text.substring(0, maxLen) + "...";
+    }
+
+    private List<Map<String, Object>> toPayload(List<ScoredChunk> scored, int limit) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (ScoredChunk sc : scored.stream().limit(limit).toList()) {
+            java.util.Map<String, Object> map = new java.util.HashMap<>();
+            map.put("chunkId", sc.chunk().getId());
+            map.put("score", sc.score());
+            list.add(map);
+        }
+        return list;
+    }
+
+    private record ScoredChunk(TranscriptChunk chunk, double score) {
     }
 }

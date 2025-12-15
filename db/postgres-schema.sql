@@ -30,3 +30,18 @@ CREATE TABLE IF NOT EXISTS transcript_chunks (
     content TEXT,
     embedding TEXT
 );
+
+CREATE TABLE IF NOT EXISTS observability_events (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP,
+    learner_id TEXT,
+    test_id BIGINT,
+    question_id BIGINT,
+    event_type VARCHAR(50),
+    latency_ms BIGINT,
+    token_usage INTEGER,
+    retrieval_empty BOOLEAN,
+    judge_result TEXT,
+    feedback TEXT,
+    payload TEXT
+);

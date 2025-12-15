@@ -3,8 +3,11 @@ package com.example.youtubeenglishtutor.controller;
 import com.example.youtubeenglishtutor.entity.Question;
 import com.example.youtubeenglishtutor.entity.Test;
 import com.example.youtubeenglishtutor.entity.WrongQuestion;
+import com.example.youtubeenglishtutor.service.DifficultyLevel;
+import com.example.youtubeenglishtutor.service.ObservabilityService;
 import com.example.youtubeenglishtutor.service.RagService;
 import com.example.youtubeenglishtutor.service.TestService;
+import com.example.youtubeenglishtutor.web.LearnerContext;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,10 +31,14 @@ public class TestController {
 
     private final TestService testService;
     private final RagService ragService;
+    private final ObservabilityService observabilityService;
+    private final LearnerContext learnerContext;
 
-    public TestController(TestService testService, RagService ragService) {
+    public TestController(TestService testService, RagService ragService, ObservabilityService observabilityService, LearnerContext learnerContext) {
         this.testService = testService;
         this.ragService = ragService;
+        this.observabilityService = observabilityService;
+        this.learnerContext = learnerContext;
     }
 
     @GetMapping
@@ -80,17 +87,58 @@ public class TestController {
         if (test == null) {
             return "redirect:/tests";
         }
-        Map<Long, String> userAnswers = answers.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> String.join(";", e.getValue())));
-        List<Long> wrongQuestionIds = test.getWrongQuestions().stream()
-                .map(wq -> wq.getQuestion().getId())
-                .toList();
-        Map<Long, String> snippets = buildSnippets(test);
-        model.addAttribute("test", test);
-        model.addAttribute("userAnswers", userAnswers);
-        model.addAttribute("wrongQuestionIds", wrongQuestionIds);
-        model.addAttribute("snippets", snippets);
+        populateResultModel(test, answers, model);
         return "result";
+    }
+
+    @GetMapping("/{id}/result")
+    public String viewResult(@PathVariable("id") Long id, Model model) {
+        Test test = testService.getTest(id);
+        if (test == null) {
+            return "redirect:/tests";
+        }
+        populateResultModel(test, null, model);
+        return "result";
+    }
+
+    @PostMapping("/{id}/feedback")
+    public String submitFeedback(
+            @PathVariable("id") Long id,
+            @RequestParam(value = "rating", required = false) String rating,
+            @RequestParam(value = "comment", required = false) String comment) {
+        String learnerId = learnerContext.getCurrentLearnerId();
+        String combined = (rating != null ? rating + " " : "") + (comment != null ? comment : "");
+        observabilityService.logFeedback(learnerId, id, null, combined.trim(), rating);
+        return "redirect:/tests/" + id + "/result";
+    }
+
+    @PostMapping("/{id}/flag")
+    public String flagQuestion(
+            @PathVariable("id") Long id,
+            @RequestParam("questionId") Long questionId,
+            @RequestParam(value = "reason", required = false) String reason) {
+        String learnerId = learnerContext.getCurrentLearnerId();
+        observabilityService.logFeedback(learnerId, id, questionId, reason, "QUESTION_FLAG");
+        return "redirect:/tests/" + id + "/result";
+    }
+
+    @PostMapping("/{id}/regenerate")
+    public String regenerate(
+            @PathVariable("id") Long id,
+            @RequestParam("difficulty") String difficulty) {
+        DifficultyLevel level = DifficultyLevel.NORMAL;
+        if ("EASIER".equalsIgnoreCase(difficulty)) {
+            level = DifficultyLevel.EASIER;
+        } else if ("HARDER".equalsIgnoreCase(difficulty)) {
+            level = DifficultyLevel.HARDER;
+        }
+        Test regenerated = testService.regenerateTest(id, level);
+        if (regenerated == null) {
+            return "redirect:/tests";
+        }
+        String learnerId = learnerContext.getCurrentLearnerId();
+        observabilityService.logFeedback(learnerId, id, null, "Regenerated with " + level, "REGENERATE");
+        return "redirect:/tests/" + regenerated.getId();
     }
 
     @GetMapping("/{id}/wrong-questions")
@@ -117,6 +165,30 @@ public class TestController {
             }
         });
         return answers;
+    }
+
+    private void populateResultModel(Test test, Map<Long, List<String>> answers, Model model) {
+        Map<Long, String> wrongAnswers = test.getWrongQuestions().stream()
+                .collect(Collectors.toMap(wq -> wq.getQuestion().getId(), WrongQuestion::getUserAnswer));
+        Map<Long, String> userAnswers = new HashMap<>();
+        for (Question question : test.getQuestions()) {
+            Long qid = question.getId();
+            if (answers != null && answers.containsKey(qid)) {
+                userAnswers.put(qid, String.join(";", answers.get(qid)));
+            } else if (wrongAnswers.containsKey(qid)) {
+                userAnswers.put(qid, wrongAnswers.get(qid));
+            } else {
+                userAnswers.put(qid, "Correct");
+            }
+        }
+        List<Long> wrongQuestionIds = test.getWrongQuestions().stream()
+                .map(wq -> wq.getQuestion().getId())
+                .toList();
+        Map<Long, String> snippets = buildSnippets(test);
+        model.addAttribute("test", test);
+        model.addAttribute("userAnswers", userAnswers);
+        model.addAttribute("wrongQuestionIds", wrongQuestionIds);
+        model.addAttribute("snippets", snippets);
     }
 
     private Map<Long, String> buildSnippets(Test test) {

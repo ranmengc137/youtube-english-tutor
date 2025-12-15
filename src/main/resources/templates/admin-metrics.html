@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Metrics</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> Metrics</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+            <a href="/admin/metrics" class="active">Metrics</a>
+        </div>
+    </div>
+
+    <h1>Observability (last 7 days)</h1>
+    <p class="muted" th:text="'Updated ' + ${metrics.generatedAt}"></p>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Total events</h3>
+            <p class="stat" th:text="${metrics.totalEvents}">0</p>
+            <p class="muted" th:text="'Last 7d: ' + ${metrics.eventsLastPeriod}"></p>
+        </div>
+        <div class="card">
+            <h3>Learners seen</h3>
+            <p class="stat" th:text="${metrics.uniqueLearnersLastPeriod}">0</p>
+        </div>
+        <div class="card">
+            <h3>Retrievals</h3>
+            <p class="stat" th:text="${metrics.retrievalEvents}">0</p>
+            <p class="muted" th:text="'Empty: ' + ${metrics.emptyRetrievalEvents}"></p>
+        </div>
+        <div class="card">
+            <h3>Retrieval latency</h3>
+            <p class="stat" th:text="${metrics.avgRetrievalLatencyMs != null ? #numbers.formatDecimal(metrics.avgRetrievalLatencyMs, 0, 0) + ' ms' : 'n/a'}">n/a</p>
+        </div>
+        <div class="card">
+            <h3>Judge accuracy</h3>
+            <p class="stat" th:text="${metrics.judgeEvents == 0 ? 'n/a' : #numbers.formatDecimal(metrics.judgeAccuracy * 100, 1, 1) + '%'}">n/a</p>
+            <p class="muted" th:text="'Events: ' + ${metrics.judgeEvents}"></p>
+        </div>
+        <div class="card">
+            <h3>User feedback</h3>
+            <p class="stat" th:text="${metrics.feedbackCount}">0</p>
+            <p class="muted">Non-empty feedback entries</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 22px;">
+        <h3>Recent events</h3>
+        <p class="muted">Latest 20 rows from observability_events.</p>
+        <div class="table">
+            <table>
+                <thead>
+                <tr>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Learner</th>
+                    <th>Test</th>
+                    <th>Question</th>
+                    <th>Latency</th>
+                    <th>Empty</th>
+                    <th>Judge</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="e : ${metrics.recentEvents}">
+                    <td th:text="${e.createdAt}">--</td>
+                    <td th:text="${e.eventType}">--</td>
+                    <td th:text="${e.learnerId}">--</td>
+                    <td th:text="${e.testId}">--</td>
+                    <td th:text="${e.questionId}">--</td>
+                    <td th:text="${e.latencyMs != null ? e.latencyMs + ' ms' : ''}">--</td>
+                    <td th:text="${e.retrievalEmpty}">--</td>
+                    <td th:text="${e.judgeResult}">--</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 22px;">
+        <h3>Daily export</h3>
+        <p class="muted">
+            A CSV is written every night to <code th:text="${'${app.metrics.export-dir:metrics-exports}'}">metrics-exports</code> as
+            <code>observability-YYYY-MM-DD.csv</code>. Adjust with <code>app.metrics.export-dir</code>.
+        </p>
+        <form method="get" action="/admin/metrics/export" class="export-form">
+            <label class="muted" style="font-size: 13px;">Export day</label>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="date" name="day" class="input" style="max-width: 200px;"
+                       th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                <button type="submit" class="button">Export CSV</button>
+            </div>
+            <p class="muted" style="margin-top: 8px;">Leave blank to export today.</p>
+        </form>
+    </div>
+</div>
+</body>
+</html>

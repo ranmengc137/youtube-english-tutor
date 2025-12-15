@@ -19,8 +19,8 @@ public class OpenAiEmbeddingService implements EmbeddingService {
     private final String model;
 
     public OpenAiEmbeddingService(
-            @Value("${app.openai.api-key}") String apiKey,
-            @Value("${app.openai.embedding-model}") String model) {
+            @Value("${app.openai.api-key:}") String apiKey,
+            @Value("${app.openai.embedding-model:text-embedding-3-small}") String model) {
         this.model = model;
         String resolvedKey = resolveApiKey(apiKey);
         this.restClient = RestClient.builder()

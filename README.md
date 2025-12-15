@@ -18,10 +18,11 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 - `app.openai.embedding-model=text-embedding-3-small`
 - RAG chunking: `app.rag.chunk-size=500`, `app.rag.chunk-overlap=100`, `app.rag.max-snippet-length=400`
 - Transcript download path: `app.download.default-path=downloads`
+- Metrics export dir: `app.metrics.export-dir=metrics-exports`
 
 ## Schema
 Postgres DDL: `db/postgres-schema.sql`
-- `tests`, `questions`, `wrong_questions`, `transcript_chunks`
+- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`
 
 ## Running
 1) Ensure Postgres is up and the DB exists; apply `db/postgres-schema.sql`.
@@ -38,3 +39,7 @@ Postgres DDL: `db/postgres-schema.sql`
 ## Notes
 - Credentials are intentionally blank in `application.properties`; set via env or local overrides.
 - Network calls to OpenAI/yt-dlp must be reachable.
+
+## Changelog
+- 2025-12-12: Added anonymous `learner_id` HttpOnly cookie, observability event logging (retrieval/judge) with per-request learner context, and `observability_events` table DDL scaffolding for metrics/export work.
+- 2025-12-12: Added `/admin/metrics` dashboard (last 7d counts/latency/errors) and nightly CSV export of `observability_events` to `app.metrics.export-dir` (default `metrics-exports/observability-YYYY-MM-DD.csv`).
