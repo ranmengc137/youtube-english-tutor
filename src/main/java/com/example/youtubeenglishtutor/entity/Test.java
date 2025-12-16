@@ -23,6 +23,8 @@ public class Test {
 
     private LocalDateTime createdAt;
 
+    private String learnerId;
+
     private String videoUrl;
 
     private String videoTitle;
@@ -54,6 +56,14 @@ public class Test {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    public String getLearnerId() {
+        return learnerId;
+    }
+
+    public void setLearnerId(String learnerId) {
+        this.learnerId = learnerId;
     }
 
     public String getVideoUrl() {

@@ -1,12 +1,15 @@
 CREATE TABLE IF NOT EXISTS tests (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMP,
+    learner_id TEXT,
     video_url TEXT,
     video_title TEXT,
     score INTEGER,
     total_questions INTEGER,
     transcript TEXT
 );
+
+CREATE INDEX IF NOT EXISTS idx_tests_learner_id ON tests(learner_id);
 
 CREATE TABLE IF NOT EXISTS questions (
     id BIGSERIAL PRIMARY KEY,

@@ -23,6 +23,7 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 
 ## Recent Changes
 
+- 2025-12-16: Per-learner history — tests now store `learner_id`, and list/view/submit/regenerate are filtered to the current anonymous cookie so different browsers cannot see each other’s history.
 - 2025-12-15: Result page UX — feedback and flag now show centered toast popups styled to match the app; scroll position is preserved after submitting feedback/flag.
 - 2025-12-15: Logging — enabled file logging to `logs/spring.log`, set root level to INFO, and silenced Spring Boot condition-evaluation reports to reduce log noise.
 - 2025-12-15: Metrics export — default CSV export directory set to `logs/` (configurable via `app.metrics.export-dir`).
@@ -50,3 +51,4 @@ Postgres DDL: `db/postgres-schema.sql`
 ## Changelog
 - 2025-12-12: Added anonymous `learner_id` HttpOnly cookie, observability event logging (retrieval/judge) with per-request learner context, and `observability_events` table DDL scaffolding for metrics/export work.
 - 2025-12-12: Added `/admin/metrics` dashboard (last 7d counts/latency/errors) and nightly CSV export of `observability_events` to `app.metrics.export-dir` (default `logs/observability-YYYY-MM-DD.csv`).
+- 2025-12-16: Scoped tests to the anonymous learner cookie: `tests` table now has `learner_id`, and all test operations (create, list, view, submit, regenerate, wrong-question review) enforce ownership.

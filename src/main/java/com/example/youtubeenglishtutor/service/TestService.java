@@ -85,9 +85,10 @@ public class TestService {
 
     @Transactional
     public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath) {
+        String learnerId = learnerContext.getCurrentLearnerId();
         String resolvedPath = resolveDownloadPath(downloadPath, useDefaultPath);
         log.info("Creating test for videoUrl={} using downloadPath={}", videoUrl, resolvedPath);
-        Optional<Test> existing = testRepository.findFirstByVideoUrlOrderByCreatedAtDesc(videoUrl);
+        Optional<Test> existing = testRepository.findFirstByVideoUrlAndLearnerIdOrderByCreatedAtDesc(videoUrl, learnerId);
         if (existing.isPresent()) {
             log.info("Reusing existing test {} for videoUrl={}", existing.get().getId(), videoUrl);
             return existing.get();
@@ -97,6 +98,7 @@ public class TestService {
         log.debug("Transcript ready ({} chars)", transcript != null ? transcript.length() : 0);
 
         Test test = new Test();
+        test.setLearnerId(learnerId);
         test.setVideoUrl(videoUrl);
         test.setVideoTitle("YouTube Video");
         test.setTranscript(transcript);
@@ -112,17 +114,28 @@ public class TestService {
 
     @Transactional(readOnly = true)
     public List<Test> listTests() {
-        return testRepository.findAll();
+        String learnerId = learnerContext.getCurrentLearnerId();
+        if (!StringUtils.hasText(learnerId)) {
+            log.warn("listTests: learnerId missing on request");
+            return List.of();
+        }
+        return testRepository.findByLearnerIdOrderByCreatedAtDesc(learnerId);
     }
 
     @Transactional(readOnly = true)
     public Test getTest(Long id) {
-        return testRepository.findById(id).orElse(null);
+        String learnerId = learnerContext.getCurrentLearnerId();
+        if (!StringUtils.hasText(learnerId)) {
+            log.warn("getTest: learnerId missing on request id={}", id);
+            return null;
+        }
+        return testRepository.findByIdAndLearnerId(id, learnerId).orElse(null);
     }
 
     @Transactional
     public Test submitAnswers(Long testId, Map<Long, List<String>> answersByQuestionId) {
-        Optional<Test> testOpt = testRepository.findById(testId);
+        String learnerId = learnerContext.getCurrentLearnerId();
+        Optional<Test> testOpt = testRepository.findByIdAndLearnerId(testId, learnerId);
         if (testOpt.isEmpty()) {
             log.warn("submitAnswers: test not found id={}", testId);
             return null;
@@ -134,7 +147,6 @@ public class TestService {
 
         int score = 0;
         List<Question> questions = test.getQuestions();
-        String learnerId = learnerContext.getCurrentLearnerId();
         for (Question question : questions) {
             List<String> submittedAnswers = answersByQuestionId.getOrDefault(question.getId(), Collections.emptyList());
             boolean correct = evaluateAnswer(question, submittedAnswers);
@@ -163,7 +175,8 @@ public class TestService {
 
     @Transactional
     public Test regenerateTest(Long testId, DifficultyLevel difficulty) {
-        Test test = testRepository.findById(testId).orElse(null);
+        String learnerId = learnerContext.getCurrentLearnerId();
+        Test test = testRepository.findByIdAndLearnerId(testId, learnerId).orElse(null);
         if (test == null) {
             log.warn("regenerateTest: test not found id={}", testId);
             return null;
