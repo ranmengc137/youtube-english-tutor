@@ -94,13 +94,14 @@ public class TestService {
             return existing.get();
         }
         enforceDurationLimit(videoUrl);
+        String videoTitle = resolveTitle(videoUrl);
         String transcript = fetchOrReuseTranscript(videoUrl, resolvedPath);
         log.debug("Transcript ready ({} chars)", transcript != null ? transcript.length() : 0);
 
         Test test = new Test();
         test.setLearnerId(learnerId);
         test.setVideoUrl(videoUrl);
-        test.setVideoTitle("YouTube Video");
+        test.setVideoTitle(videoTitle);
         test.setTranscript(transcript);
 
         List<Question> generatedQuestions = aiQuestionService.generateQuestionsFromTranscript(transcript, DifficultyLevel.NORMAL);
@@ -110,6 +111,14 @@ public class TestService {
         ragService.saveChunks(test, transcript, chunkSize, chunkOverlap);
 
         return testRepository.save(test);
+    }
+
+    private String resolveTitle(String videoUrl) {
+        String title = videoMetadataService.getTitle(videoUrl);
+        if (!StringUtils.hasText(title)) {
+            return "YouTube Video";
+        }
+        return title;
     }
 
     @Transactional(readOnly = true)

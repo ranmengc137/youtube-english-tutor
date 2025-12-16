@@ -42,6 +42,32 @@ public class YtDlpVideoMetadataService implements VideoMetadataService {
         }
     }
 
+    @Override
+    public String getTitle(String videoUrl) {
+        try {
+            List<String> command = List.of(
+                    ytdlpBinary,
+                    "--get-title",
+                    "--no-playlist",
+                    videoUrl
+            );
+            Process process = new ProcessBuilder(command)
+                    .redirectErrorStream(true)
+                    .start();
+            int exit = process.waitFor();
+            String output = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            String title = extractFirstNonBlankLine(output);
+            if (exit != 0 || !StringUtils.hasText(title)) {
+                log.warn("yt-dlp title lookup failed exit={} rawOutput={}", exit, output);
+                return null;
+            }
+            return title.trim();
+        } catch (Exception e) {
+            log.warn("Failed to query title via yt-dlp for {}", videoUrl, e);
+            return null;
+        }
+    }
+
     private long parseDuration(String duration) {
         String[] parts = duration.split(":");
         try {
@@ -79,5 +105,18 @@ public class YtDlpVideoMetadataService implements VideoMetadataService {
             }
         }
         return durationLine;
+    }
+
+    private String extractFirstNonBlankLine(String rawOutput) {
+        if (!StringUtils.hasText(rawOutput)) {
+            return null;
+        }
+        for (String line : rawOutput.split("\\R")) {
+            String trimmed = line.trim();
+            if (StringUtils.hasText(trimmed)) {
+                return trimmed;
+            }
+        }
+        return null;
     }
 }
