@@ -48,3 +48,10 @@ CREATE TABLE IF NOT EXISTS observability_events (
     feedback TEXT,
     payload TEXT
 );
+
+CREATE TABLE IF NOT EXISTS messages (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP,
+    author TEXT,
+    content TEXT
+);

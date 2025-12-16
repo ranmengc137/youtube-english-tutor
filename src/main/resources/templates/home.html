@@ -40,6 +40,34 @@
             <p class="muted">Videos longer than 30 minutes are not allowed.</p>
         </div>
     </div>
+
+    <div class="card" style="margin-top: 28px;">
+        <h3>Message Board</h3>
+        <p class="muted">Leave a message plz! Share your ideas with others!</p>
+        <div th:if="${messageSuccess}" style="margin:8px 0; padding:10px; border-radius:8px; background: rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0;">
+            <span th:text="${messageSuccess}">Message posted.</span>
+        </div>
+        <div th:if="${messageError}" style="margin:8px 0; padding:10px; border-radius:8px; background: rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fecaca;">
+            <span th:text="${messageError}">Message cannot be empty.</span>
+        </div>
+        <form th:action="@{/messages}" method="post" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                <input class="input" type="text" name="author" placeholder="Name (optional)" style="flex:1; min-width:180px;">
+                <button class="button" type="submit" style="align-self:flex-start;">Post</button>
+            </div>
+            <textarea class="input" name="content" rows="3" placeholder="Write your message..." required></textarea>
+        </form>
+        <div style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
+            <div th:each="msg : ${messages}" style="padding:12px; border:1px solid rgba(255,255,255,0.08); border-radius:10px; background: rgba(255,255,255,0.03);">
+                <div style="display:flex; justify-content:space-between; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <div style="font-weight:600;" th:text="${msg.author}">Anonymous</div>
+                    <div class="muted" th:text="${#temporals.format(msg.createdAt, 'yyyy-MM-dd HH:mm')}">2025-12-16</div>
+                </div>
+                <div style="margin-top:6px; line-height:1.5;" th:text="${msg.content}">Message text</div>
+            </div>
+            <div th:if="${#lists.isEmpty(messages)}" class="muted">No messages yet. Be the first to say hi!</div>
+        </div>
+    </div>
 </div>
 </body>
 </html>
