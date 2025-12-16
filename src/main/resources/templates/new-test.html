@@ -82,17 +82,17 @@
             progressText.textContent = steps[stepIdx];
 
             const interval = setInterval(() => {
-                pct = Math.min(99, pct + 2.5 + Math.random() * 3); // target ~25s total
+                pct = Math.min(99, pct + Math.random() * 8);
                 progressBar.style.width = pct.toFixed(0) + '%';
                 progressPct.textContent = pct.toFixed(0) + '%';
                 if (pct > (stepIdx + 1) * 25 && stepIdx < steps.length - 1) {
                     stepIdx++;
                     progressText.textContent = steps[stepIdx];
                 }
-            }, 1000);
+            }, 800);
 
             // Fallback timeout to clear if navigation doesn't happen (e.g. error)
-            setTimeout(() => clearInterval(interval), 28000);
+            setTimeout(() => clearInterval(interval), 20000);
         });
     })();
 </script>
