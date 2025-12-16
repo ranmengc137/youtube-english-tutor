@@ -45,12 +45,12 @@
         <h3>Message Board</h3>
         <p class="muted">Leave a message plz! Share your ideas with others!</p>
         <div th:if="${messageSuccess}" style="margin:8px 0; padding:10px; border-radius:8px; background: rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); color:#a7f3d0;">
-            <span th:text="${messageSuccess}">Message posted.</span>
+            <span th:text="${messageSuccess}">Message posted. Thank you!</span>
         </div>
         <div th:if="${messageError}" style="margin:8px 0; padding:10px; border-radius:8px; background: rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fecaca;">
             <span th:text="${messageError}">Message cannot be empty.</span>
         </div>
-        <form th:action="@{/messages}" method="post" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+        <form th:action="@{/messages}" method="post" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;" onsubmit="rememberScroll()">
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
                 <input class="input" type="text" name="author" placeholder="Name (optional)" style="flex:1; min-width:180px;">
                 <button class="button" type="submit" style="align-self:flex-start;">Post</button>
@@ -64,10 +64,37 @@
                     <div class="muted" th:text="${#temporals.format(msg.createdAt, 'yyyy-MM-dd HH:mm')}">2025-12-16</div>
                 </div>
                 <div style="margin-top:6px; line-height:1.5;" th:text="${msg.content}">Message text</div>
+                <div th:if="${currentLearnerId != null and msg.learnerId == currentLearnerId}" style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                    <form th:action="@{'/messages/' + ${msg.id} + '/edit'}" method="post" style="display:flex; gap:6px; flex:1; align-items:flex-start;" onsubmit="rememberScroll()">
+                        <textarea class="input" name="content" rows="2" th:text="${msg.content}" style="flex:1;"></textarea>
+                        <button class="button secondary" type="submit">Update</button>
+                    </form>
+                    <form th:action="@{'/messages/' + ${msg.id} + '/delete'}" method="post" onsubmit="rememberScroll()">
+                        <button class="button danger" type="submit" onclick="return confirm('Delete this message?')">Delete</button>
+                    </form>
+                </div>
             </div>
             <div th:if="${#lists.isEmpty(messages)}" class="muted">No messages yet. Be the first to say hi!</div>
         </div>
     </div>
 </div>
+<script>
+    // Preserve scroll during POST/redirect by storing it briefly in sessionStorage.
+    function rememberScroll() {
+        sessionStorage.setItem('homeScrollY', String(window.scrollY || 0));
+        return true;
+    }
+    // On load, if a stored scroll value exists, restore it and clear.
+    window.addEventListener('load', () => {
+        const stored = sessionStorage.getItem('homeScrollY');
+        if (stored) {
+            const y = parseInt(stored, 10);
+            if (!isNaN(y)) {
+                window.scrollTo({ top: y, behavior: 'instant' });
+            }
+            sessionStorage.removeItem('homeScrollY');
+        }
+    });
+</script>
 </body>
 </html>

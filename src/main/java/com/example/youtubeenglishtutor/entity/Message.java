@@ -24,6 +24,10 @@ public class Message {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    private String learnerId;
+
+    private boolean deleted;
+
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
@@ -51,5 +55,21 @@ public class Message {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getLearnerId() {
+        return learnerId;
+    }
+
+    public void setLearnerId(String learnerId) {
+        this.learnerId = learnerId;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 }

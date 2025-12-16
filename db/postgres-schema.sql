@@ -53,5 +53,10 @@ CREATE TABLE IF NOT EXISTS messages (
     id BIGSERIAL PRIMARY KEY,
     created_at TIMESTAMP,
     author TEXT,
-    content TEXT
+    content TEXT,
+    learner_id TEXT,
+    deleted BOOLEAN DEFAULT FALSE
 );
+
+CREATE INDEX IF NOT EXISTS idx_messages_learner_id ON messages(learner_id);
+CREATE INDEX IF NOT EXISTS idx_messages_deleted ON messages(deleted);

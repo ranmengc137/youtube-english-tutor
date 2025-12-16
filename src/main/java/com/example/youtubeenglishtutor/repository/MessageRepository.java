@@ -7,5 +7,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
-    List<Message> findTop20ByOrderByCreatedAtDesc();
+    List<Message> findTop20ByDeletedFalseOrderByCreatedAtDesc();
+    Message findByIdAndLearnerIdAndDeletedFalse(Long id, String learnerId);
+    Message findTop1ByLearnerIdAndContentAndDeletedFalseOrderByCreatedAtDesc(String learnerId, String content);
 }
