@@ -52,3 +52,6 @@ Postgres DDL: `db/postgres-schema.sql`
 - 2025-12-12: Added anonymous `learner_id` HttpOnly cookie, observability event logging (retrieval/judge) with per-request learner context, and `observability_events` table DDL scaffolding for metrics/export work.
 - 2025-12-12: Added `/admin/metrics` dashboard (last 7d counts/latency/errors) and nightly CSV export of `observability_events` to `app.metrics.export-dir` (default `logs/observability-YYYY-MM-DD.csv`).
 - 2025-12-16: Scoped tests to the anonymous learner cookie: `tests` table now has `learner_id`, and all test operations (create, list, view, submit, regenerate, wrong-question review) enforce ownership.
+
+## License
+MIT. See `LICENSE`.
