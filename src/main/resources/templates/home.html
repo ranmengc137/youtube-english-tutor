@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>YouTube English Tutor</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css(v=5)}">
 </head>
 <body>
 <div class="page">
@@ -11,6 +11,7 @@
         <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
         <div class="nav-links">
             <a href="/">Home</a>
+            <a href="/start-instantly">Start Instantly</a>
             <a href="/tests/new">New Test</a>
             <a href="/tests">History</a>
         </div>
@@ -26,18 +27,57 @@
         </div>
     </div>
 
+    <div class="card mini-discover">
+        <div class="section-heading">
+            <div>
+                <p class="pill">Featured quick starts</p>
+                <h2>Two fastest ways to begin.</h2>
+                <p class="muted">Everyday English (finish in 5–8 minutes) or Random TED (10–15 minutes). Always captioned.</p>
+            </div>
+            <div class="section-note">UI only — sample actions</div>
+        </div>
+        <div class="instant-grid">
+            <div class="instant-card">
+                <div>
+                    <p class="pill">Everyday English Clips</p>
+                    <h3>Finish in 5–8 minutes</h3>
+                    <p class="muted">Micro-learning clips to build listening + real-life phrases fast.</p>
+                    <div class="meta">
+                        <span class="badge badge-green">≤ 8m</span>
+                        <span class="badge badge-amber">Easy</span>
+                        <span class="badge">Captions on</span>
+                    </div>
+                </div>
+                <a href="/watch/everyday" class="button secondary home-surprise">Surprise me</a>
+            </div>
+            <div class="instant-card">
+                <div>
+                    <p class="pill">Random TED</p>
+                    <h3>TED shorts, 10–15 minutes</h3>
+                    <p class="muted">Clear delivery + strong structure for focused practice.</p>
+                    <div class="meta">
+                        <span class="badge badge-green">10–15m</span>
+                        <span class="badge badge-blue">Medium</span>
+                        <span class="badge">Captions on</span>
+                    </div>
+                </div>
+                <a href="/watch/ted" class="button secondary home-ted">Shuffle a TED</a>
+            </div>
+        </div>
+    </div>
+
     <div class="grid">
         <div class="card">
             <h3>How it works</h3>
-            <p class="muted">We pull the transcript with yt-dlp, generate questions via OpenAI, and show relevant transcript excerpts when you miss one.</p>
+            <p class="muted">Two ways to start: paste a YouTube link to generate a quiz on-demand, or use Start Instantly to pick a short, captioned video with no link needed.</p>
         </div>
         <div class="card">
             <h3>Stay on track</h3>
-            <p class="muted">Review past scores in History and focus on the snippets highlighted with the correct answers.</p>
+            <p class="muted">We grab the transcript, chunk it for retrieval, generate questions, and pair feedback with relevant snippets so you learn faster.</p>
         </div>
         <div class="card">
-            <h3>Limitations</h3>
-            <p class="muted">Videos longer than 30 minutes are not allowed.</p>
+            <h3>Why 30 minutes max</h3>
+            <p class="muted">The 30-minute cap is intentional—keeps sessions focused, loads fast, and avoids prep delays. Everyday English clips stay ≤ 8 minutes for micro-learning.</p>
         </div>
     </div>
 

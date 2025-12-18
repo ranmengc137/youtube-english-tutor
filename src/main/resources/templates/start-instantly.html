@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Start Instantly</title>
+    <link rel="stylesheet" th:href="@{/css/style.css(v=5)}">
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/start-instantly" class="active">Start Instantly</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+        </div>
+    </div>
+
+    <div class="hero">
+        <p class="pill">Pick and learn</p>
+        <h1>Start Instantly: browse short, captioned videos.</h1>
+        <p>Every pick is under 30 minutes with English captions—no links or waiting required.</p>
+        <div class="home-actions">
+            <a href="#browse" class="button">Browse videos</a>
+            <a href="/tests/new" class="button secondary">Prefer to paste a link?</a>
+        </div>
+    </div>
+
+    <div class="card" id="browse">
+        <div class="section-heading">
+            <div>
+                <p class="pill">Browse</p>
+                <h2>Pick a video, start learning instantly.</h2>
+                <p class="muted">All videos have English captions and respect the duration caps.</p>
+            </div>
+            <div class="section-note">Light filters only</div>
+        </div>
+
+        <form class="filter-bar" action="/start-instantly#browse" method="get">
+            <select class="input" name="category">
+                <option value="ANY" th:selected="${selectedCategory == 'ANY'}">All categories</option>
+                <option th:each="c : ${categories}" th:value="${c.name()}" th:text="${c.name()}" th:selected="${selectedCategory == c.name()}">EVERYDAY_ENGLISH</option>
+            </select>
+            <select class="input" name="duration">
+                <option value="ANY" th:selected="${selectedDuration == 'ANY'}">Any duration</option>
+                <option value="MICRO_8" th:selected="${selectedDuration == 'MICRO_8'}">≤ 8 minutes (micro)</option>
+                <option value="MAX_15" th:selected="${selectedDuration == 'MAX_15'}">≤ 15 minutes</option>
+                <option value="MAX_30" th:selected="${selectedDuration == 'MAX_30'}">≤ 30 minutes</option>
+            </select>
+            <select class="input" name="difficulty">
+                <option value="ANY" th:selected="${selectedDifficulty == 'ANY'}">Any difficulty</option>
+                <option value="Easy" th:selected="${selectedDifficulty == 'Easy'}">Easy</option>
+                <option value="Medium" th:selected="${selectedDifficulty == 'Medium'}">Medium</option>
+            </select>
+            <input class="input" type="text" name="q" placeholder="Search title or keyword" th:value="${q}">
+            <button class="button secondary" type="submit">Apply</button>
+        </form>
+
+        <div class="thumb-grid">
+            <a class="thumb-card" th:each="v : ${videos}" th:href="@{'/watch?id=' + ${v.id}}">
+                <div class="thumb-img" th:style="${v.thumbnailUrl != null} ? 'background-image:url(''' + ${v.thumbnailUrl} + ''');' : ''"></div>
+                <div class="thumb-body">
+                    <div class="thumb-title" th:text="${v.title}">Video title</div>
+                    <div class="thumb-meta">
+                        <span th:text="${v.category}">CATEGORY</span>
+                        <span> • </span>
+                        <span th:text="${(v.durationSeconds != null ? (v.durationSeconds/60) : 0)} + 'm'}">10m</span>
+                        <span> • Captions</span>
+                    </div>
+                    <div class="meta">
+                        <span class="badge badge-amber" th:if="${v.difficulty == 'Easy'}">Easy</span>
+                        <span class="badge badge-blue" th:if="${v.difficulty == 'Medium'}">Medium</span>
+                        <span class="badge badge-green" th:if="${v.durationSeconds != null}" th:text="'≤ ' + ${v.durationSeconds/60} + 'm'">≤ 15m</span>
+                    </div>
+                </div>
+            </a>
+            <div th:if="${#lists.isEmpty(videos)}" class="muted">No videos in the pool yet. Configure `app.youtube.api-key` and let the refresh job run.</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-heading">
+            <div>
+                <p class="pill">Past picks</p>
+                <h2>Explore past recommendations</h2>
+                <p class="muted">If today’s grid isn’t your vibe, browse previous picks. (UI only — sample data)</p>
+            </div>
+            <div class="section-note">Search + sort</div>
+        </div>
+
+        <div class="filter-bar">
+            <input class="input" type="text" placeholder="Search title or keyword">
+            <select class="input">
+                <option>All categories</option>
+                <option>Everyday English</option>
+                <option>TED</option>
+                <option>Business</option>
+                <option>Tech / AI</option>
+                <option>Travel</option>
+            </select>
+            <select class="input">
+                <option>Newest first</option>
+                <option>Most popular</option>
+            </select>
+            <button class="button secondary" type="button">Search</button>
+        </div>
+
+        <div class="thumb-grid">
+            <div class="thumb-card">
+                <div class="thumb-img" style="background-image:url('https://i.ytimg.com/vi/_gqsZ8bFrfI/hqdefault.jpg');"></div>
+                <div class="thumb-body">
+                    <div class="thumb-title">Yesterday: concise communication</div>
+                    <div class="thumb-meta">TED • 11m • Captions • Recommended 2 days ago</div>
+                    <div class="meta">
+                        <span class="badge badge-amber">Easy</span>
+                        <span class="badge badge-green">≤ 15m</span>
+                    </div>
+                </div>
+            </div>
+            <div class="thumb-card">
+                <div class="thumb-img" style="background-image:url('https://i.ytimg.com/vi/obZ3iLUPN5A/hqdefault.jpg');"></div>
+                <div class="thumb-body">
+                    <div class="thumb-title">Last week: negotiation phrases</div>
+                    <div class="thumb-meta">Business • 16m • Captions • Recommended 7 days ago</div>
+                    <div class="meta">
+                        <span class="badge badge-blue">Medium</span>
+                        <span class="badge badge-green">≤ 30m</span>
+                    </div>
+                </div>
+            </div>
+            <div class="thumb-card">
+                <div class="thumb-img" style="background-image:url('https://i.ytimg.com/vi/7T0d8yN-3yY/hqdefault.jpg');"></div>
+                <div class="thumb-body">
+                    <div class="thumb-title">Last week: small talk at work</div>
+                    <div class="thumb-meta">Everyday English • 8m • Captions • Recommended 6 days ago</div>
+                    <div class="meta">
+                        <span class="badge badge-amber">Easy</span>
+                        <span class="badge badge-green">≤ 8m</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

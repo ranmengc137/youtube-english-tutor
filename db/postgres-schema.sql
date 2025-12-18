@@ -60,3 +60,25 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE INDEX IF NOT EXISTS idx_messages_learner_id ON messages(learner_id);
 CREATE INDEX IF NOT EXISTS idx_messages_deleted ON messages(deleted);
+
+CREATE TABLE IF NOT EXISTS catalog_videos (
+    id BIGSERIAL PRIMARY KEY,
+    category VARCHAR(50) NOT NULL,
+    video_id TEXT NOT NULL,
+    video_url TEXT NOT NULL,
+    title TEXT NOT NULL,
+    channel_title TEXT,
+    thumbnail_url TEXT,
+    duration_seconds BIGINT,
+    captions_available BOOLEAN,
+    difficulty TEXT,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP,
+    refreshed_at TIMESTAMP,
+    last_seen_at TIMESTAMP,
+    source_query TEXT
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_catalog_videos_category_video_id ON catalog_videos(category, video_id);
+CREATE INDEX IF NOT EXISTS idx_catalog_videos_category_active ON catalog_videos(category, active);
+CREATE INDEX IF NOT EXISTS idx_catalog_videos_video_id ON catalog_videos(video_id);

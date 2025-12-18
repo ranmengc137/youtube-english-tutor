@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Take Test</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/style.css(v=5)}">
 </head>
 <body>
 <div class="page">
@@ -11,6 +11,7 @@
         <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
         <div class="nav-links">
             <a href="/">Home</a>
+            <a href="/start-instantly">Start Instantly</a>
             <a href="/tests/new">New Test</a>
             <a href="/tests">History</a>
         </div>
@@ -19,6 +20,15 @@
     <div class="card">
         <h1 th:text="${test.videoTitle}">Test Title</h1>
         <p class="muted">Answer the questions below.</p>
+
+        <div th:if="${videoId != null}" class="mini-player" aria-label="Video mini player">
+            <iframe
+                    th:src="@{'https://www.youtube.com/embed/' + ${videoId} + '?rel=0&modestbranding=1'}"
+                    title="Video"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen></iframe>
+        </div>
 
         <form th:action="@{'/tests/' + ${test.id} + '/submit'}" method="post">
             <div th:each="question, iterStat : ${test.questions}" class="question">

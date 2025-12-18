@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${videoTitle}">Watch</title>
+    <link rel="stylesheet" th:href="@{/css/style.css(v=5)}">
+</head>
+<body>
+<div class="page">
+    <div class="topbar">
+        <div class="brand"><span class="dot"></span> YouTube English Tutor</div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/start-instantly">Start Instantly</a>
+            <a href="/tests/new">New Test</a>
+            <a href="/tests">History</a>
+        </div>
+    </div>
+
+    <div class="watch-shell">
+        <div class="watch-header">
+            <div>
+                <h1 class="watch-title" th:text="${videoTitle}">Video title</h1>
+                <div class="watch-sub">
+                    <span class="badge badge-amber" th:text="${videoCategory}">Everyday English</span>
+                    <span class="badge badge-green" th:text="${videoDuration}">≤ 8 minutes</span>
+                </div>
+                <div class="watch-hint">
+                    <span class="pill" th:text="${hint}">Up next: quiz after video</span>
+                </div>
+            </div>
+            <button class="button secondary" type="button" id="skipToQuizBtn">Skip to quiz</button>
+        </div>
+
+        <div class="watch-player">
+            <div id="ytPlayer"></div>
+        </div>
+
+        <div class="watch-status muted" id="prepStatus">
+            Preparing quiz in the background…
+        </div>
+    </div>
+</div>
+
+<div class="prep-overlay" id="prepOverlay" style="display:none;">
+    <div class="prep-card">
+        <div style="font-weight:700; font-size:18px;">Preparing quiz…</div>
+        <div class="muted" id="prepOverlayText" style="margin-top:6px;">Almost there.</div>
+        <div class="prep-bar">
+            <div class="prep-bar-fill" id="prepBarFill"></div>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const videoUrl = /*[[${videoUrl}]]*/ "";
+    const videoId = /*[[${videoId}]]*/ "";
+</script>
+<script>
+    let prepId = null;
+    let testId = null;
+    let prepState = 'PENDING';
+    let pollTimer = null;
+    let player = null;
+
+    const prepStatusEl = document.getElementById('prepStatus');
+    const overlay = document.getElementById('prepOverlay');
+    const overlayText = document.getElementById('prepOverlayText');
+    const barFill = document.getElementById('prepBarFill');
+    const skipBtn = document.getElementById('skipToQuizBtn');
+
+    function showOverlay(message) {
+        overlayText.textContent = message || 'Preparing quiz…';
+        overlay.style.display = 'flex';
+    }
+
+    function hideOverlay() {
+        overlay.style.display = 'none';
+    }
+
+    function setPrepStatus(text) {
+        prepStatusEl.textContent = text;
+    }
+
+    function redirectToQuiz() {
+        window.location.href = '/tests/' + testId;
+    }
+
+    async function startPreparation() {
+        const res = await fetch('/api/quick-start/prepare?videoUrl=' + encodeURIComponent(videoUrl), { method: 'GET' });
+        const json = await res.json();
+        prepId = json.prepId;
+        setPrepStatus('Preparing quiz in the background…');
+        pollTimer = window.setInterval(pollStatus, 1500);
+        // A fake progress bar while we poll.
+        let pct = 10;
+        const progressTimer = window.setInterval(() => {
+            if (prepState === 'READY' || prepState === 'ERROR') {
+                window.clearInterval(progressTimer);
+                return;
+            }
+            pct = Math.min(92, pct + Math.random() * 6);
+            barFill.style.width = pct.toFixed(0) + '%';
+        }, 900);
+    }
+
+    async function pollStatus() {
+        if (!prepId || prepState === 'READY' || prepState === 'ERROR') return;
+        const res = await fetch('/api/quick-start/status?prepId=' + encodeURIComponent(prepId), { method: 'GET' });
+        const json = await res.json();
+        prepState = json.state;
+        if (prepState === 'READY' && json.testId) {
+            testId = json.testId;
+            setPrepStatus('Quiz is ready. It will start when the video ends.');
+            barFill.style.width = '100%';
+            if (pollTimer) window.clearInterval(pollTimer);
+            if (overlay.style.display !== 'none') {
+                redirectToQuiz();
+            }
+        } else if (prepState === 'ERROR') {
+            setPrepStatus('Could not prepare quiz. You can still watch the video.');
+            if (pollTimer) window.clearInterval(pollTimer);
+            hideOverlay();
+        }
+    }
+
+    function onVideoEnded() {
+        if (testId) {
+            redirectToQuiz();
+            return;
+        }
+        showOverlay('Preparing quiz…');
+        setPrepStatus('Preparing quiz…');
+    }
+
+    skipBtn.addEventListener('click', () => {
+        if (testId) {
+            redirectToQuiz();
+            return;
+        }
+        showOverlay('Preparing quiz…');
+    });
+
+    // YouTube IFrame API to detect "ended".
+    window.onYouTubeIframeAPIReady = function() {
+        player = new YT.Player('ytPlayer', {
+            videoId: videoId,
+            playerVars: { autoplay: 1, rel: 0, modestbranding: 1 },
+            events: {
+                onReady: (e) => e.target.playVideo(),
+                onStateChange: (e) => {
+                    if (e.data === YT.PlayerState.ENDED) {
+                        onVideoEnded();
+                    }
+                }
+            }
+        });
+    };
+
+    (function loadApiAndKickoff() {
+        startPreparation().catch(() => setPrepStatus('Preparing quiz in the background…'));
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+    })();
+</script>
+</body>
+</html>
+

@@ -1,12 +1,13 @@
 # YouTube English Tutor
 
-Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts (yt-dlp), generates questions (OpenAI), and uses RAG over transcript chunks (stored in Postgres) to show relevant snippets for wrong answers.
+Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts (yt-dlp), generates questions (OpenAI), and uses RAG over transcript chunks (stored in Postgres) to show relevant snippets for wrong answers. A YouTube-backed catalog powers “Start Instantly” with a cached pool of short, captioned videos so random picks are instant without live API calls on click.
 
 ## Stack
 - Java 17, Spring Boot (Web, Thymeleaf, Data JPA)
 - Postgres (primary), H2 (dev if you switch URL)
 - yt-dlp for transcripts
 - OpenAI for questions and embeddings
+- YouTube Data API (cached catalog pool; no live search on user clicks)
 
 ## Config
 `src/main/resources/application.properties` (or env vars):
@@ -20,9 +21,16 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 - Transcript download path: `app.download.default-path=downloads`
 - Metrics export dir: `app.metrics.export-dir=logs`
 - Application log file: defaults to `logs/spring.log` (set via `logging.file.path=logs`)
+- YouTube catalog:
+  - `app.youtube.api-key` (required for ingest)
+  - `app.catalog.refresh.enabled=true`
+  - `app.catalog.refresh-cron=0 0 */6 * * *` (default: every 6h)
+  - `app.catalog.pool-size=100` (min 50, max 200)
+  - Optional manual refresh guard: `app.admin.token=` (blank to disable; if set, POST /admin/catalog/refresh requires `X-Admin-Token`)
 
 ## Recent Changes
 
+- 2025-12-16: Start Instantly Catalog — nightly (cron) YouTube ingest builds a cached pool of captioned, duration-limited videos per category; “Surprise me” / “Shuffle a TED” now pick from DB (fallback samples if empty); Start Instantly browse grid is DB-driven with filters/search; watch page is video-first with background quiz prep and auto handoff to quiz, mini-player on quiz page; manual refresh endpoint added (`POST /admin/catalog/refresh`, optional `X-Admin-Token` guard).
 - 2025-12-16: Per-learner history — tests now store `learner_id`, and list/view/submit/regenerate are filtered to the current anonymous cookie so different browsers cannot see each other’s history.
 - 2025-12-15: Result page UX — feedback and flag now show centered toast popups styled to match the app; scroll position is preserved after submitting feedback/flag.
 - 2025-12-15: Logging — enabled file logging to `logs/spring.log`, set root level to INFO, and silenced Spring Boot condition-evaluation reports to reduce log noise.
@@ -30,12 +38,12 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 
 ## Schema
 Postgres DDL: `db/postgres-schema.sql`
-- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`
+- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`, `catalog_videos`
 
 ## Running
 1) Ensure Postgres is up and the DB exists; apply `db/postgres-schema.sql`.
 2) Install yt-dlp and ensure it’s on PATH or set `app.ytdlp.binary`.
-3) Export OpenAI key: `export OPENAI_API_KEY=...`
+3) Export API keys: `export OPENAI_API_KEY=...` and `export APP_YOUTUBE_API_KEY=...` (or set via config).
 4) Start app: `mvn spring-boot:run`
 5) Open `http://localhost:8080`
 

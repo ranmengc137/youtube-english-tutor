@@ -8,6 +8,7 @@ import com.example.youtubeenglishtutor.service.ObservabilityService;
 import com.example.youtubeenglishtutor.service.RagService;
 import com.example.youtubeenglishtutor.service.TestService;
 import com.example.youtubeenglishtutor.web.LearnerContext;
+import com.example.youtubeenglishtutor.web.YoutubeUrlUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -77,6 +78,7 @@ public class TestController {
         if (test == null) {
             return "redirect:/tests";
         }
+        model.addAttribute("videoId", YoutubeUrlUtils.extractVideoId(test.getVideoUrl()));
         model.addAttribute("test", test);
         return "take-test";
     }
