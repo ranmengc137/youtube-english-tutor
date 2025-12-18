@@ -67,6 +67,11 @@
                     <div th:if="${question.type.name() == 'FILL_IN_BLANK'}">
                         <input type="text" th:name="'q_' + ${question.id}" class="input">
                     </div>
+
+                    <!-- WRITING -->
+                    <div th:if="${question.type.name() == 'WRITING'}">
+                        <textarea th:name="'q_' + ${question.id}" rows="4" class="input" placeholder="Write your answer..."></textarea>
+                    </div>
                 </div>
             </div>
 

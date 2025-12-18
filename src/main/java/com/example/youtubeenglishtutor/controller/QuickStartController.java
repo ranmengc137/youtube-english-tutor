@@ -101,8 +101,10 @@ public class QuickStartController {
 
     @GetMapping("/api/quick-start/prepare")
     @ResponseBody
-    public Map<String, String> prepare(@RequestParam("videoUrl") String videoUrl) {
-        String prepId = preparationService.start(learnerContext.getCurrentLearnerId(), videoUrl);
+    public Map<String, String> prepare(
+            @RequestParam("videoUrl") String videoUrl,
+            @RequestParam(value = "count", required = false) Integer count) {
+        String prepId = preparationService.start(learnerContext.getCurrentLearnerId(), videoUrl, count);
         return Map.of("prepId", prepId);
     }
 

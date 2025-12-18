@@ -40,8 +40,8 @@ public class QuickStartPreparationService {
         this.testService = testService;
     }
 
-    public String start(String learnerId, String videoUrl) {
-        String key = (learnerId != null ? learnerId : "anon") + "|" + videoUrl;
+    public String start(String learnerId, String videoUrl, Integer desiredSize) {
+        String key = (learnerId != null ? learnerId : "anon") + "|" + videoUrl + "|" + (desiredSize != null ? desiredSize : "default");
         String existingPrepId = prepIdByKey.get(key);
         if (existingPrepId != null) {
             log.info("Quick-start prep: reuse existing prepId={} learnerId={} videoUrl={}", existingPrepId, learnerId, videoUrl);
@@ -49,11 +49,11 @@ public class QuickStartPreparationService {
         }
         String prepId = UUID.randomUUID().toString();
         prepIdByKey.put(key, prepId);
-        log.info("Quick-start prep: start prepId={} learnerId={} videoUrl={}", prepId, learnerId, videoUrl);
+        log.info("Quick-start prep: start prepId={} learnerId={} videoUrl={} desiredSize={}", prepId, learnerId, videoUrl, desiredSize);
 
         CompletableFuture<Status> future = CompletableFuture.supplyAsync(() -> {
             try {
-                Test test = testService.createTest(videoUrl, null, true);
+                Test test = testService.createTest(videoUrl, null, true, desiredSize);
                 log.info("Quick-start prep: ready prepId={} testId={}", prepId, test.getId());
                 return Status.ready(test.getId());
             } catch (Exception e) {

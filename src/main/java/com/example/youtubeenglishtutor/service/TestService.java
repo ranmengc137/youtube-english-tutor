@@ -7,13 +7,16 @@ import com.example.youtubeenglishtutor.entity.WrongQuestion;
 import com.example.youtubeenglishtutor.entity.CatalogVideo;
 import com.example.youtubeenglishtutor.entity.CatalogPreparation;
 import com.example.youtubeenglishtutor.entity.CatalogTranscriptChunk;
+import com.example.youtubeenglishtutor.entity.CatalogQuestionPack;
 import com.example.youtubeenglishtutor.service.ObservabilityService;
+import com.example.youtubeenglishtutor.service.CatalogPackService;
 import com.example.youtubeenglishtutor.repository.TestRepository;
 import com.example.youtubeenglishtutor.repository.TranscriptChunkRepository;
 import com.example.youtubeenglishtutor.repository.WrongQuestionRepository;
 import com.example.youtubeenglishtutor.repository.CatalogVideoRepository;
 import com.example.youtubeenglishtutor.repository.CatalogPreparationRepository;
 import com.example.youtubeenglishtutor.repository.CatalogTranscriptChunkRepository;
+import com.example.youtubeenglishtutor.repository.CatalogQuestionPackRepository;
 import com.example.youtubeenglishtutor.web.LearnerContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -50,6 +53,8 @@ public class TestService {
     private final CatalogVideoRepository catalogVideoRepository;
     private final CatalogPreparationRepository catalogPreparationRepository;
     private final CatalogTranscriptChunkRepository catalogTranscriptChunkRepository;
+    private final CatalogQuestionPackRepository catalogQuestionPackRepository;
+    private final CatalogPackService catalogPackService;
     private final VideoMetadataService videoMetadataService;
     private final ObservabilityService observabilityService;
     private final LearnerContext learnerContext;
@@ -79,6 +84,8 @@ public class TestService {
             CatalogVideoRepository catalogVideoRepository,
             CatalogPreparationRepository catalogPreparationRepository,
             CatalogTranscriptChunkRepository catalogTranscriptChunkRepository,
+            CatalogQuestionPackRepository catalogQuestionPackRepository,
+            CatalogPackService catalogPackService,
             VideoMetadataService videoMetadataService,
             ObservabilityService observabilityService,
             LearnerContext learnerContext) {
@@ -91,6 +98,8 @@ public class TestService {
         this.catalogVideoRepository = catalogVideoRepository;
         this.catalogPreparationRepository = catalogPreparationRepository;
         this.catalogTranscriptChunkRepository = catalogTranscriptChunkRepository;
+        this.catalogQuestionPackRepository = catalogQuestionPackRepository;
+        this.catalogPackService = catalogPackService;
         this.videoMetadataService = videoMetadataService;
         this.observabilityService = observabilityService;
         this.learnerContext = learnerContext;
@@ -98,6 +107,10 @@ public class TestService {
 
     @Transactional
     public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath) {
+        return createTest(videoUrl, downloadPath, useDefaultPath, null);
+    }
+
+    public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath, Integer desiredSize) {
         String learnerId = learnerContext.getCurrentLearnerId();
         String resolvedPath = resolveDownloadPath(downloadPath, useDefaultPath);
         log.info("Creating test for videoUrl={} using downloadPath={}", videoUrl, resolvedPath);
@@ -130,10 +143,25 @@ public class TestService {
         test.setVideoTitle(videoTitle);
         test.setTranscript(transcript);
 
-        List<Question> generatedQuestions = aiQuestionService.generateQuestionsFromTranscript(transcript, DifficultyLevel.NORMAL);
-        generatedQuestions.forEach(test::addQuestion);
-        test.setTotalQuestions(generatedQuestions.size());
-        test = testRepository.save(test);
+        int targetSize = desiredSize != null && desiredSize > 0 ? desiredSize : 10;
+        List<Question> generatedQuestions = null;
+        if (catalogVideo != null) {
+            Optional<CatalogQuestionPack> packOpt = catalogPackService.findNearestPack(catalogVideo, targetSize);
+            if (packOpt.isPresent()) {
+                List<Question> packQuestions = catalogPackService.materialize(packOpt.get());
+                packQuestions.forEach(test::addQuestion);
+                test.setTotalQuestions(packQuestions.size());
+                test = testRepository.save(test);
+                log.info("Used pre-generated pack size={} (actual={}) for videoId={}", targetSize, packQuestions.size(), videoId);
+            }
+        }
+
+        if (test.getId() == null) {
+            generatedQuestions = aiQuestionService.generateQuestionsFromTranscript(transcript, DifficultyLevel.NORMAL, targetSize, false);
+            generatedQuestions.forEach(test::addQuestion);
+            test.setTotalQuestions(generatedQuestions.size());
+            test = testRepository.save(test);
+        }
         final String videoIdFinal = videoId;
         final Test savedTest = test;
         if (prewarm != null && Boolean.TRUE.equals(prewarm.getEmbeddingsReady())) {
@@ -276,6 +304,9 @@ public class TestService {
                 }
                 String userAnswer = sanitizedUserAnswers.get(0);
                 return correctAnswers.stream().anyMatch(ans -> ans.equalsIgnoreCase(userAnswer));
+            case WRITING:
+                // Writing is open-ended; treat as correct for scoring. Feedback happens elsewhere.
+                return true;
             default:
                 return false;
         }

@@ -29,7 +29,14 @@
                     <span class="pill" th:text="${hint}">Up next: quiz after video</span>
                 </div>
             </div>
-            <button class="button secondary" type="button" id="skipToQuizBtn">Skip to quiz</button>
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+                <select class="input" id="questionCount" style="width:180px;">
+                    <option value="5">5 questions</option>
+                    <option value="10" selected>10 questions</option>
+                    <option value="15">15 questions</option>
+                </select>
+                <button class="button secondary" type="button" id="skipToQuizBtn">Skip to quiz</button>
+            </div>
         </div>
 
         <div class="watch-player">
@@ -87,7 +94,8 @@
     }
 
     async function startPreparation() {
-        const res = await fetch('/api/quick-start/prepare?videoUrl=' + encodeURIComponent(videoUrl), { method: 'GET' });
+        const count = document.getElementById('questionCount')?.value || '10';
+        const res = await fetch('/api/quick-start/prepare?videoUrl=' + encodeURIComponent(videoUrl) + '&count=' + encodeURIComponent(count), { method: 'GET' });
         const json = await res.json();
         prepId = json.prepId;
         setPrepStatus('Preparing quiz in the background…');
@@ -166,4 +174,3 @@
 </script>
 </body>
 </html>
-

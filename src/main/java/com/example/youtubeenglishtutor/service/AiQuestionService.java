@@ -8,5 +8,9 @@ public interface AiQuestionService {
         return generateQuestionsFromTranscript(transcript, DifficultyLevel.NORMAL);
     }
 
-    List<Question> generateQuestionsFromTranscript(String transcript, DifficultyLevel difficulty);
+    default List<Question> generateQuestionsFromTranscript(String transcript, DifficultyLevel difficulty) {
+        return generateQuestionsFromTranscript(transcript, difficulty, 10, false);
+    }
+
+    List<Question> generateQuestionsFromTranscript(String transcript, DifficultyLevel difficulty, int count, boolean includeWriting);
 }

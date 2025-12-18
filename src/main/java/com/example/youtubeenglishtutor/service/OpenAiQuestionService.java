@@ -45,8 +45,8 @@ public class OpenAiQuestionService implements AiQuestionService {
     }
 
     @Override
-    public List<Question> generateQuestionsFromTranscript(String transcript, DifficultyLevel difficulty) {
-        OpenAiChatRequest request = buildRequest(transcript, difficulty);
+    public List<Question> generateQuestionsFromTranscript(String transcript, DifficultyLevel difficulty, int count, boolean includeWriting) {
+        OpenAiChatRequest request = buildRequest(transcript, difficulty, count, includeWriting);
         log.info("Calling OpenAI model={} for quiz generation", model);
         OpenAiChatResponse response = restClient.post()
                 .uri("/chat/completions")
@@ -64,18 +64,23 @@ public class OpenAiQuestionService implements AiQuestionService {
         return parseQuestionsFromContent(content);
     }
 
-    private OpenAiChatRequest buildRequest(String transcript, DifficultyLevel difficulty) {
+    private OpenAiChatRequest buildRequest(String transcript, DifficultyLevel difficulty, int count, boolean includeWriting) {
         String systemPrompt = """
-                You create English quiz questions from transcripts. Produce EXACTLY 10 questions as a JSON array.
-                Each item: {"type":"SINGLE_CHOICE|MULTIPLE_CHOICE|TRUE_FALSE|FILL_IN_BLANK","text":"...","options":["opt1","opt2"],"correct":["answer1","answer2"]}.
+                You create English quiz questions from transcripts. Produce EXACTLY %d questions as a JSON array.
+                Each item: {"type":"SINGLE_CHOICE|MULTIPLE_CHOICE|TRUE_FALSE|FILL_IN_BLANK|WRITING","text":"...","options":["opt1","opt2"],"correct":["answer1","answer2"]}.
                 For TRUE_FALSE use options ["True","False"]. For FILL_IN_BLANK, options can be empty, but correct must have one answer.
+                If type is WRITING, options can be empty and correct should contain 1–2 ideal answer points.
+                Include at least one WRITING item if requested.
                 Only return the JSON array, nothing else.
-                """;
+                """.formatted(Math.max(3, count));
         String difficultyHint = difficulty != null ? difficulty.toPromptTag() : DifficultyLevel.NORMAL.toPromptTag();
 
         List<ChatMessage> messages = List.of(
                 new ChatMessage("system", systemPrompt),
-                new ChatMessage("user", difficultyHint + "\nTranscript:\n" + transcript)
+                new ChatMessage("user",
+                        difficultyHint
+                                + (includeWriting ? "\nInclude at least one WRITING question." : "")
+                                + "\nTranscript:\n" + transcript)
         );
         return new OpenAiChatRequest(model, messages, 0.3);
     }

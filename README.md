@@ -31,10 +31,15 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
   - `app.prewarm.enabled=true`
   - `app.prewarm.cron=0 30 2 * * *` (default 2:30 AM)
   - `app.prewarm.nightly-cap=10`
+- Pre-generated question packs (sizes, writing included):
+  - `app.pregen.enabled=true`
+  - `app.pregen.cron=0 10 3 * * *` (default 3:10 AM)
+  - `app.pregen.nightly-cap=6`
+  - `app.pregen.sizes=5,10,15`
 
 ## Recent Changes
 
-- 2025-12-16: Start Instantly Catalog — nightly (cron) YouTube ingest builds a cached pool of captioned, duration-limited videos per category; “Surprise me” / “Shuffle a TED” now pick from DB (fallback samples if empty); Start Instantly browse grid is DB-driven with filters/search; watch page is video-first with background quiz prep and auto handoff to quiz, mini-player on quiz page; manual refresh endpoint added (`POST /admin/catalog/refresh`, optional `X-Admin-Token` guard).
+- 2025-12-16: Start Instantly Catalog — nightly (cron) YouTube ingest builds a cached pool of captioned, duration-limited videos per category; “Surprise me” / “Shuffle a TED” now pick from DB (fallback samples if empty); Start Instantly browse grid is DB-driven with filters/search; watch page is video-first with background quiz prep and auto handoff to quiz, mini-player on quiz page; manual refresh endpoint added (`POST /admin/catalog/refresh`, optional `X-Admin-Token` guard). Added nightly prewarm (transcript+embeddings) and pre-generated question packs (sizes 5/10/15 with a writing prompt) reused on quiz start; watch page lets users pick question count before quiz.
 - 2025-12-16: Per-learner history — tests now store `learner_id`, and list/view/submit/regenerate are filtered to the current anonymous cookie so different browsers cannot see each other’s history.
 - 2025-12-15: Result page UX — feedback and flag now show centered toast popups styled to match the app; scroll position is preserved after submitting feedback/flag.
 - 2025-12-15: Logging — enabled file logging to `logs/spring.log`, set root level to INFO, and silenced Spring Boot condition-evaluation reports to reduce log noise.
@@ -42,7 +47,7 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 
 ## Schema
 Postgres DDL: `db/postgres-schema.sql`
-- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`, `catalog_videos`, `catalog_preparations`, `catalog_transcript_chunks`
+- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`, `catalog_videos`, `catalog_preparations`, `catalog_transcript_chunks`, `catalog_question_packs`
 
 ## Running
 1) Ensure Postgres is up and the DB exists; apply `db/postgres-schema.sql`.
