@@ -27,6 +27,10 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
   - `app.catalog.refresh-cron=0 0 */6 * * *` (default: every 6h)
   - `app.catalog.pool-size=100` (min 50, max 200)
   - Optional manual refresh guard: `app.admin.token=` (blank to disable; if set, POST /admin/catalog/refresh requires `X-Admin-Token`)
+- Catalog prewarm (transcript + embeddings, nightly):
+  - `app.prewarm.enabled=true`
+  - `app.prewarm.cron=0 30 2 * * *` (default 2:30 AM)
+  - `app.prewarm.nightly-cap=10`
 
 ## Recent Changes
 
@@ -38,7 +42,7 @@ Spring Boot app to generate quizzes from YouTube videos. It fetches transcripts 
 
 ## Schema
 Postgres DDL: `db/postgres-schema.sql`
-- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`, `catalog_videos`
+- `tests`, `questions`, `wrong_questions`, `transcript_chunks`, `observability_events`, `catalog_videos`, `catalog_preparations`, `catalog_transcript_chunks`
 
 ## Running
 1) Ensure Postgres is up and the DB exists; apply `db/postgres-schema.sql`.

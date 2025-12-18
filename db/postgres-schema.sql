@@ -82,3 +82,22 @@ CREATE TABLE IF NOT EXISTS catalog_videos (
 CREATE UNIQUE INDEX IF NOT EXISTS uq_catalog_videos_category_video_id ON catalog_videos(category, video_id);
 CREATE INDEX IF NOT EXISTS idx_catalog_videos_category_active ON catalog_videos(category, active);
 CREATE INDEX IF NOT EXISTS idx_catalog_videos_video_id ON catalog_videos(video_id);
+
+CREATE TABLE IF NOT EXISTS catalog_preparations (
+    id BIGSERIAL PRIMARY KEY,
+    catalog_video_id BIGINT NOT NULL REFERENCES catalog_videos(id) ON DELETE CASCADE,
+    transcript TEXT,
+    transcript_ready BOOLEAN DEFAULT FALSE,
+    embeddings_ready BOOLEAN DEFAULT FALSE,
+    chunk_count INTEGER,
+    prepared_at TIMESTAMP,
+    last_error TEXT,
+    UNIQUE (catalog_video_id)
+);
+
+CREATE TABLE IF NOT EXISTS catalog_transcript_chunks (
+    id BIGSERIAL PRIMARY KEY,
+    catalog_video_id BIGINT NOT NULL REFERENCES catalog_videos(id) ON DELETE CASCADE,
+    content TEXT,
+    embedding TEXT
+);

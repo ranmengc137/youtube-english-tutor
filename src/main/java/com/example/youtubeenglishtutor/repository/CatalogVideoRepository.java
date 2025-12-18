@@ -15,6 +15,8 @@ public interface CatalogVideoRepository extends JpaRepository<CatalogVideo, Long
 
     Optional<CatalogVideo> findFirstByCategoryAndVideoId(CatalogCategory category, String videoId);
 
+    Optional<CatalogVideo> findFirstByVideoId(String videoId);
+
     long countByCategoryAndActiveTrue(CatalogCategory category);
 
     Page<CatalogVideo> findByCategoryAndActiveTrue(CatalogCategory category, Pageable pageable);
@@ -49,4 +51,14 @@ public interface CatalogVideoRepository extends JpaRepository<CatalogVideo, Long
               and v.lastSeenAt < :cutoff
             """)
     int deactivateStale(@Param("category") CatalogCategory category, @Param("cutoff") LocalDateTime cutoff);
+
+    @Query("""
+            select v
+            from CatalogVideo v
+            left join CatalogPreparation p on p.catalogVideo = v
+            where v.active = true
+              and (p.id is null or p.embeddingsReady = false)
+            order by v.refreshedAt desc nulls last, v.createdAt desc
+            """)
+    Page<CatalogVideo> findNeedingPrewarm(Pageable pageable);
 }

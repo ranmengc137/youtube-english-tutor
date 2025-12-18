@@ -4,10 +4,16 @@ import com.example.youtubeenglishtutor.entity.Question;
 import com.example.youtubeenglishtutor.entity.QuestionType;
 import com.example.youtubeenglishtutor.entity.Test;
 import com.example.youtubeenglishtutor.entity.WrongQuestion;
+import com.example.youtubeenglishtutor.entity.CatalogVideo;
+import com.example.youtubeenglishtutor.entity.CatalogPreparation;
+import com.example.youtubeenglishtutor.entity.CatalogTranscriptChunk;
 import com.example.youtubeenglishtutor.service.ObservabilityService;
 import com.example.youtubeenglishtutor.repository.TestRepository;
 import com.example.youtubeenglishtutor.repository.TranscriptChunkRepository;
 import com.example.youtubeenglishtutor.repository.WrongQuestionRepository;
+import com.example.youtubeenglishtutor.repository.CatalogVideoRepository;
+import com.example.youtubeenglishtutor.repository.CatalogPreparationRepository;
+import com.example.youtubeenglishtutor.repository.CatalogTranscriptChunkRepository;
 import com.example.youtubeenglishtutor.web.LearnerContext;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -21,8 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
@@ -43,6 +47,9 @@ public class TestService {
     private final TranscriptService transcriptService;
     private final RagService ragService;
     private final TranscriptChunkRepository chunkRepository;
+    private final CatalogVideoRepository catalogVideoRepository;
+    private final CatalogPreparationRepository catalogPreparationRepository;
+    private final CatalogTranscriptChunkRepository catalogTranscriptChunkRepository;
     private final VideoMetadataService videoMetadataService;
     private final ObservabilityService observabilityService;
     private final LearnerContext learnerContext;
@@ -69,6 +76,9 @@ public class TestService {
             TranscriptService transcriptService,
             RagService ragService,
             TranscriptChunkRepository chunkRepository,
+            CatalogVideoRepository catalogVideoRepository,
+            CatalogPreparationRepository catalogPreparationRepository,
+            CatalogTranscriptChunkRepository catalogTranscriptChunkRepository,
             VideoMetadataService videoMetadataService,
             ObservabilityService observabilityService,
             LearnerContext learnerContext) {
@@ -78,6 +88,9 @@ public class TestService {
         this.transcriptService = transcriptService;
         this.ragService = ragService;
         this.chunkRepository = chunkRepository;
+        this.catalogVideoRepository = catalogVideoRepository;
+        this.catalogPreparationRepository = catalogPreparationRepository;
+        this.catalogTranscriptChunkRepository = catalogTranscriptChunkRepository;
         this.videoMetadataService = videoMetadataService;
         this.observabilityService = observabilityService;
         this.learnerContext = learnerContext;
@@ -95,7 +108,20 @@ public class TestService {
         }
         enforceDurationLimit(videoUrl);
         String videoTitle = resolveTitle(videoUrl);
-        String transcript = fetchOrReuseTranscript(videoUrl, resolvedPath);
+
+        CatalogPreparation prewarm = null;
+        CatalogVideo catalogVideo = null;
+        String videoId = com.example.youtubeenglishtutor.web.YoutubeUrlUtils.extractVideoId(videoUrl);
+        if (StringUtils.hasText(videoId)) {
+            catalogVideo = catalogVideoRepository.findFirstByVideoId(videoId).orElse(null);
+            if (catalogVideo != null) {
+                prewarm = catalogPreparationRepository.findByCatalogVideo(catalogVideo).orElse(null);
+            }
+        }
+
+        String transcript = (prewarm != null && Boolean.TRUE.equals(prewarm.getTranscriptReady()) && StringUtils.hasText(prewarm.getTranscript()))
+                ? prewarm.getTranscript()
+                : fetchOrReuseTranscript(videoUrl, resolvedPath);
         log.debug("Transcript ready ({} chars)", transcript != null ? transcript.length() : 0);
 
         Test test = new Test();
@@ -108,7 +134,27 @@ public class TestService {
         generatedQuestions.forEach(test::addQuestion);
         test.setTotalQuestions(generatedQuestions.size());
         test = testRepository.save(test);
-        ragService.saveChunks(test, transcript, chunkSize, chunkOverlap);
+        final String videoIdFinal = videoId;
+        final Test savedTest = test;
+        if (prewarm != null && Boolean.TRUE.equals(prewarm.getEmbeddingsReady())) {
+            List<CatalogTranscriptChunk> catalogChunks = catalogTranscriptChunkRepository.findByCatalogVideo(catalogVideo);
+            if (!catalogChunks.isEmpty()) {
+                chunkRepository.deleteByTestId(test.getId());
+                List<com.example.youtubeenglishtutor.entity.TranscriptChunk> chunks = catalogChunks.stream().map(cc -> {
+                    com.example.youtubeenglishtutor.entity.TranscriptChunk c = new com.example.youtubeenglishtutor.entity.TranscriptChunk();
+                    c.setTest(savedTest);
+                    c.setContent(cc.getContent());
+                    c.setEmbedding(cc.getEmbedding());
+                    return c;
+                }).toList();
+                chunkRepository.saveAll(chunks);
+                log.info("Reused prewarmed embeddings for videoId={} chunks={}", videoIdFinal, catalogChunks.size());
+            } else {
+                ragService.saveChunks(test, transcript, chunkSize, chunkOverlap);
+            }
+        } else {
+            ragService.saveChunks(test, transcript, chunkSize, chunkOverlap);
+        }
 
         return testRepository.save(test);
     }
@@ -289,33 +335,10 @@ public class TestService {
     }
 
     private String resolveCacheKey(String videoUrl) {
-        String videoId = extractVideoId(videoUrl);
+        String videoId = com.example.youtubeenglishtutor.web.YoutubeUrlUtils.extractVideoId(videoUrl);
         if (StringUtils.hasText(videoId)) {
             return videoId;
         }
         return hash(videoUrl);
-    }
-
-    private String extractVideoId(String videoUrl) {
-        if (!StringUtils.hasText(videoUrl)) {
-            return null;
-        }
-        // Patterns for common YouTube URLs
-        Pattern watchPattern = Pattern.compile("[?&]v=([^&]+)");
-        Matcher watchMatcher = watchPattern.matcher(videoUrl);
-        if (watchMatcher.find()) {
-            return watchMatcher.group(1);
-        }
-        Pattern shortPattern = Pattern.compile("youtu\\.be/([^?&/]+)");
-        Matcher shortMatcher = shortPattern.matcher(videoUrl);
-        if (shortMatcher.find()) {
-            return shortMatcher.group(1);
-        }
-        Pattern embedPattern = Pattern.compile("/embed/([^?&/]+)");
-        Matcher embedMatcher = embedPattern.matcher(videoUrl);
-        if (embedMatcher.find()) {
-            return embedMatcher.group(1);
-        }
-        return null;
     }
 }
