@@ -32,7 +32,7 @@ public interface CatalogVideoRepository extends JpaRepository<CatalogVideo, Long
               and (:category is null or v.category = :category)
               and (:difficulty is null or v.difficulty = :difficulty)
               and (:maxSeconds is null or v.durationSeconds <= :maxSeconds)
-              and (:q is null or lower(v.title) like lower(concat('%', :q, '%')))
+              and (:q is null or lower(v.title) like concat('%', :q, '%'))
             order by v.refreshedAt desc nulls last, v.createdAt desc
             """)
     Page<CatalogVideo> browse(

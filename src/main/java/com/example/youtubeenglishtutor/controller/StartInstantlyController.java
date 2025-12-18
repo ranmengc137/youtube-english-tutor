@@ -12,6 +12,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 public class StartInstantlyController {
 
@@ -51,6 +53,9 @@ public class StartInstantlyController {
                 page.getNumberOfElements());
 
         model.addAttribute("videos", page.getContent());
+        if (page.getNumberOfElements() == 0) {
+            model.addAttribute("sampleVideos", sampleFallback());
+        }
         model.addAttribute("categories", videoCatalogService.categories());
         model.addAttribute("selectedCategory", category != null ? category : "ANY");
         model.addAttribute("selectedDuration", duration != null ? duration : "ANY");
@@ -80,5 +85,19 @@ public class StartInstantlyController {
             case "MAX_30" -> 30L * 60L;
             default -> null;
         };
+    }
+
+    private List<FallbackVideo> sampleFallback() {
+        return List.of(
+                new FallbackVideo("Everyday English: small talk you can reuse today",
+                        "Everyday English", "https://i.ytimg.com/vi/H14bBuluwB8/hqdefault.jpg", "≤ 8m", "Easy"),
+                new FallbackVideo("TEDx: The art of concise communication",
+                        "TED", "https://i.ytimg.com/vi/_gqsZ8bFrfI/hqdefault.jpg", "11m", "Medium"),
+                new FallbackVideo("Travel English: airport check-in smooth and simple",
+                        "Travel", "https://i.ytimg.com/vi/YxDN9Nzn5xY/hqdefault.jpg", "12m", "Easy")
+        );
+    }
+
+    public record FallbackVideo(String title, String category, String thumbnail, String durationLabel, String difficulty) {
     }
 }

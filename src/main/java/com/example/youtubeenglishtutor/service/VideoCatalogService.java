@@ -50,7 +50,8 @@ public class VideoCatalogService {
             Long maxSeconds,
             String q,
             Pageable pageable) {
-        return catalogVideoRepository.browse(category, difficulty, maxSeconds, (q != null && !q.isBlank()) ? q.trim() : null, pageable);
+        String normalizedQ = (q != null && !q.isBlank()) ? q.trim().toLowerCase(java.util.Locale.ROOT) : null;
+        return catalogVideoRepository.browse(category, difficulty, maxSeconds, normalizedQ, pageable);
     }
 
     public Optional<CatalogVideo> findById(Long id) {

@@ -93,6 +93,19 @@
         window.location.href = '/tests/' + testId;
     }
 
+    function attemptRedirectOrWait() {
+        if (testId) {
+            redirectToQuiz();
+            return;
+        }
+        showOverlay('Preparing quiz…');
+        setPrepStatus('Preparing quiz…');
+        // Ensure we keep polling until ready.
+        if (!pollTimer) {
+            pollTimer = window.setInterval(pollStatus, 1500);
+        }
+    }
+
     async function startPreparation() {
         const count = document.getElementById('questionCount')?.value || '10';
         const res = await fetch('/api/quick-start/prepare?videoUrl=' + encodeURIComponent(videoUrl) + '&count=' + encodeURIComponent(count), { method: 'GET' });
@@ -122,9 +135,8 @@
             setPrepStatus('Quiz is ready. It will start when the video ends.');
             barFill.style.width = '100%';
             if (pollTimer) window.clearInterval(pollTimer);
-            if (overlay.style.display !== 'none') {
-                redirectToQuiz();
-            }
+            // Always redirect when ready; video-first users will be at end, skip users get instant.
+            redirectToQuiz();
         } else if (prepState === 'ERROR') {
             setPrepStatus('Could not prepare quiz. You can still watch the video.');
             if (pollTimer) window.clearInterval(pollTimer);
@@ -133,20 +145,11 @@
     }
 
     function onVideoEnded() {
-        if (testId) {
-            redirectToQuiz();
-            return;
-        }
-        showOverlay('Preparing quiz…');
-        setPrepStatus('Preparing quiz…');
+        attemptRedirectOrWait();
     }
 
     skipBtn.addEventListener('click', () => {
-        if (testId) {
-            redirectToQuiz();
-            return;
-        }
-        showOverlay('Preparing quiz…');
+        attemptRedirectOrWait();
     });
 
     // YouTube IFrame API to detect "ended".
