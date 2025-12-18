@@ -89,17 +89,13 @@
         prepStatusEl.textContent = text;
     }
 
-    function redirectToQuiz(currentTestId) {
-        if (!currentTestId) {
-            console.error('Attempted to redirect to quiz with invalid testId.');
-            return;
-        }
-        window.location.href = '/tests/' + currentTestId;
+    function redirectToQuiz() {
+        window.location.href = '/tests/' + testId;
     }
 
     function attemptRedirectOrWait() {
         if (testId) {
-            redirectToQuiz(testId);
+            redirectToQuiz();
             return;
         }
         showOverlay('Preparing quiz…');
@@ -140,7 +136,7 @@
             barFill.style.width = '100%';
             if (pollTimer) window.clearInterval(pollTimer);
             // Always redirect when ready; video-first users will be at end, skip users get instant.
-            redirectToQuiz(testId);
+            redirectToQuiz();
         } else if (prepState === 'ERROR') {
             setPrepStatus('Could not prepare quiz. You can still watch the video.');
             if (pollTimer) window.clearInterval(pollTimer);
