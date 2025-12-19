@@ -59,6 +59,17 @@
     </div>
 </div>
 
+<div class="prep-overlay" id="choiceOverlay" style="display:none;">
+    <div class="prep-card">
+        <div style="font-weight:700; font-size:18px;">Finished!</div>
+        <div class="muted" style="margin-top:6px;">What would you like to do next?</div>
+        <div style="margin-top: 20px; display:flex; gap: 12px;">
+            <button class="button secondary" type="button" id="watchAgainBtn">Watch Again</button>
+            <button class="button" type="button" id="takeQuizBtn">Take Quiz</button>
+        </div>
+    </div>
+</div>
+
 <script th:inline="javascript">
     const videoUrl = /*[[${videoUrl}]]*/ "";
     const videoId = /*[[${videoId}]]*/ "";
@@ -69,12 +80,14 @@
     let prepState = 'PENDING';
     let pollTimer = null;
     let player = null;
+    let skipTriggered = false;
 
     const prepStatusEl = document.getElementById('prepStatus');
     const overlay = document.getElementById('prepOverlay');
     const overlayText = document.getElementById('prepOverlayText');
     const barFill = document.getElementById('prepBarFill');
     const skipBtn = document.getElementById('skipToQuizBtn');
+    const choiceOverlay = document.getElementById('choiceOverlay');
 
     function showOverlay(message) {
         overlayText.textContent = message || 'Preparing quiz…';
@@ -90,24 +103,11 @@
     }
 
     function redirectToQuiz(currentTestId) {
-        if (!currentTestId) {
-            console.error('Attempted to redirect to quiz with invalid testId.');
+        if (typeof currentTestId !== 'number' || currentTestId <= 0) {
+            console.error('Attempted to redirect to quiz with invalid testId:', currentTestId);
             return;
         }
         window.location.href = '/tests/' + currentTestId;
-    }
-
-    function attemptRedirectOrWait() {
-        if (testId) {
-            redirectToQuiz(testId);
-            return;
-        }
-        showOverlay('Preparing quiz…');
-        setPrepStatus('Preparing quiz…');
-        // Ensure we keep polling until ready.
-        if (!pollTimer) {
-            pollTimer = window.setInterval(pollStatus, 1500);
-        }
     }
 
     async function startPreparation() {
@@ -136,11 +136,21 @@
         prepState = json.state;
         if (prepState === 'READY' && json.testId) {
             testId = json.testId;
-            setPrepStatus('Quiz is ready. It will start when the video ends.');
+            setPrepStatus('Quiz is ready.');
             barFill.style.width = '100%';
             if (pollTimer) window.clearInterval(pollTimer);
-            // Always redirect when ready; video-first users will be at end, skip users get instant.
-            redirectToQuiz(testId);
+            hideOverlay();
+
+            // ONLY redirect automatically if the user previously clicked "Skip"
+            if (skipTriggered) {
+                redirectToQuiz(testId);
+            }
+
+            // If the "Finished!" modal is waiting for the quiz to be ready, show it now.
+            if (choiceOverlay.dataset.isWaiting) {
+                showChoiceModal();
+            }
+
         } else if (prepState === 'ERROR') {
             setPrepStatus('Could not prepare quiz. You can still watch the video.');
             if (pollTimer) window.clearInterval(pollTimer);
@@ -148,12 +158,44 @@
         }
     }
 
+    function showChoiceModal() {
+        choiceOverlay.style.display = 'flex';
+    }
+
     function onVideoEnded() {
-        attemptRedirectOrWait();
+        if (testId) {
+            showChoiceModal();
+        } else {
+            // If quiz not ready, show "Preparing..." and set a flag
+            // so pollStatus knows to show the choice modal when it's done.
+            showOverlay('Almost there, preparing the quiz...');
+            choiceOverlay.dataset.isWaiting = true;
+        }
     }
 
     skipBtn.addEventListener('click', () => {
-        attemptRedirectOrWait();
+        if (testId) {
+            redirectToQuiz(testId);
+            return;
+        }
+        // User wants to skip, show overlay and set the flag.
+        skipTriggered = true;
+        showOverlay('Preparing quiz…');
+        setPrepStatus('Preparing quiz…');
+        // Ensure polling is running if it isn't already
+        if (!pollTimer) {
+            pollTimer = window.setInterval(pollStatus, 1500);
+        }
+    });
+
+    document.getElementById('watchAgainBtn').addEventListener('click', () => {
+        choiceOverlay.style.display = 'none';
+        player.seekTo(0);
+        player.playVideo();
+    });
+
+    document.getElementById('takeQuizBtn').addEventListener('click', () => {
+        redirectToQuiz(testId);
     });
 
     // YouTube IFrame API to detect "ended".

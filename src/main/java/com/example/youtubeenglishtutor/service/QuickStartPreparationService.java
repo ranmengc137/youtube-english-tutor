@@ -8,6 +8,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import com.example.youtubeenglishtutor.web.LearnerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -32,12 +34,14 @@ public class QuickStartPreparationService {
     }
 
     private final TestService testService;
+    private final LearnerContext learnerContext;
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private final Map<String, CompletableFuture<Status>> futuresByPrepId = new ConcurrentHashMap<>();
     private final Map<String, String> prepIdByKey = new ConcurrentHashMap<>();
 
-    public QuickStartPreparationService(TestService testService) {
+    public QuickStartPreparationService(TestService testService, LearnerContext learnerContext) {
         this.testService = testService;
+        this.learnerContext = learnerContext;
     }
 
     public String start(String learnerId, String videoUrl, Integer desiredSize) {
@@ -51,7 +55,10 @@ public class QuickStartPreparationService {
         prepIdByKey.put(key, prepId);
         log.info("Quick-start prep: start prepId={} learnerId={} videoUrl={} desiredSize={}", prepId, learnerId, videoUrl, desiredSize);
 
+        final String learnerIdForFuture = learnerId; // Capture the learnerId for use in the lambda
         CompletableFuture<Status> future = CompletableFuture.supplyAsync(() -> {
+            // Set learnerId for this thread's context
+            learnerContext.setCurrentLearnerId(learnerIdForFuture);
             try {
                 Test test = testService.createTest(videoUrl, null, true, desiredSize);
                 log.info("Quick-start prep: ready prepId={} testId={}", prepId, test.getId());
@@ -59,6 +66,9 @@ public class QuickStartPreparationService {
             } catch (Exception e) {
                 log.warn("Quick-start prep: error prepId={} msg={}", prepId, e.getMessage());
                 return Status.error(e.getMessage() != null ? e.getMessage() : "Failed to prepare quiz.");
+            } finally {
+                // Clear learnerId from this thread's context after use
+                learnerContext.clear();
             }
         }, executor);
 

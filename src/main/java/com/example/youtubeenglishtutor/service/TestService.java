@@ -105,20 +105,20 @@ public class TestService {
         this.learnerContext = learnerContext;
     }
 
-    @Transactional
     public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath) {
         return createTest(videoUrl, downloadPath, useDefaultPath, null);
     }
 
+    @Transactional
     public Test createTest(String videoUrl, String downloadPath, boolean useDefaultPath, Integer desiredSize) {
         String learnerId = learnerContext.getCurrentLearnerId();
         String resolvedPath = resolveDownloadPath(downloadPath, useDefaultPath);
         log.info("Creating test for videoUrl={} using downloadPath={}", videoUrl, resolvedPath);
-        Optional<Test> existing = testRepository.findFirstByVideoUrlAndLearnerIdOrderByCreatedAtDesc(videoUrl, learnerId);
-        if (existing.isPresent()) {
-            log.info("Reusing existing test {} for videoUrl={}", existing.get().getId(), videoUrl);
-            return existing.get();
-        }
+        // Optional<Test> existing = testRepository.findFirstByVideoUrlAndLearnerIdOrderByCreatedAtDesc(videoUrl, learnerId);
+        // if (existing.isPresent()) {
+        //     log.info("Reusing existing test {} for videoUrl={}", existing.get().getId(), videoUrl);
+        //     return existing.get();
+        // }
         enforceDurationLimit(videoUrl);
         String videoTitle = resolveTitle(videoUrl);
 
