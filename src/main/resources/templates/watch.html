@@ -88,6 +88,29 @@
     const barFill = document.getElementById('prepBarFill');
     const skipBtn = document.getElementById('skipToQuizBtn');
     const choiceOverlay = document.getElementById('choiceOverlay');
+    const questionCountEl = document.getElementById('questionCount');
+
+    questionCountEl.addEventListener('change', () => {
+        // A new quiz size has been requested. Reset the state and start over.
+        console.log('Question count changed. Restarting preparation.');
+        if (pollTimer) {
+            window.clearInterval(pollTimer);
+            pollTimer = null;
+        }
+        prepState = 'PENDING';
+        testId = null;
+        skipTriggered = false;
+
+        // Hide any overlays
+        hideOverlay();
+        choiceOverlay.style.display = 'none';
+        if(choiceOverlay.dataset.isWaiting) {
+            choiceOverlay.dataset.isWaiting = false;
+        }
+
+        // Kick off the new preparation
+        startPreparation().catch(() => setPrepStatus('Preparing quiz in the background…'));
+    });
 
     function showOverlay(message) {
         overlayText.textContent = message || 'Preparing quiz…';
@@ -152,7 +175,8 @@
             }
 
         } else if (prepState === 'ERROR') {
-            setPrepStatus('Could not prepare quiz. You can still watch the video.');
+            const errorMsg = json.error || 'Could not prepare quiz. You can still watch the video.';
+            setPrepStatus('Error: ' + errorMsg);
             if (pollTimer) window.clearInterval(pollTimer);
             hideOverlay();
         }

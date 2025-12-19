@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
@@ -58,6 +60,7 @@ public class TestService {
     private final VideoMetadataService videoMetadataService;
     private final ObservabilityService observabilityService;
     private final LearnerContext learnerContext;
+    private final ConcurrentHashMap<String, Object> transcriptLocks = new ConcurrentHashMap<>();
 
     @Value("${app.download.default-path:downloads}")
     private String defaultDownloadPath;
@@ -334,24 +337,28 @@ public class TestService {
     }
 
     private String fetchOrReuseTranscript(String videoUrl, String downloadPath) {
-        Path directory = Path.of(downloadPath).toAbsolutePath();
         String cacheKey = resolveCacheKey(videoUrl);
-        String fileName = "transcript-" + cacheKey + ".txt";
-        Path transcriptFile = directory.resolve(fileName);
-        try {
-            Files.createDirectories(directory);
-            if (Files.exists(transcriptFile)) {
-                log.info("Reusing cached transcript for {} at {}", videoUrl, transcriptFile);
-                return Files.readString(transcriptFile);
+        Object lock = transcriptLocks.computeIfAbsent(cacheKey, k -> new Object());
+
+        synchronized (lock) {
+            Path directory = Path.of(downloadPath).toAbsolutePath();
+            String fileName = "transcript-" + cacheKey + ".txt";
+            Path transcriptFile = directory.resolve(fileName);
+            try {
+                Files.createDirectories(directory);
+                if (Files.exists(transcriptFile)) {
+                    log.info("Reusing cached transcript for {} at {}", videoUrl, transcriptFile);
+                    return Files.readString(transcriptFile);
+                }
+                log.info("Transcript cache miss for {} (key={}), fetching...", videoUrl, cacheKey);
+                String transcript = transcriptService.fetchTranscript(videoUrl);
+                Files.writeString(transcriptFile, transcript);
+                log.info("Transcript saved to {}", transcriptFile);
+                return transcript;
+            } catch (IOException e) {
+                log.error("Failed to save transcript to {}", downloadPath, e);
+                throw new IllegalStateException("Failed to save transcript to " + downloadPath, e);
             }
-            log.info("Transcript cache miss for {} (key={}), fetching...", videoUrl, cacheKey);
-            String transcript = transcriptService.fetchTranscript(videoUrl);
-            Files.writeString(transcriptFile, transcript);
-            log.info("Transcript saved to {}", transcriptFile);
-            return transcript;
-        } catch (IOException e) {
-            log.error("Failed to save transcript to {}", downloadPath, e);
-            throw new IllegalStateException("Failed to save transcript to " + downloadPath, e);
         }
     }
 
