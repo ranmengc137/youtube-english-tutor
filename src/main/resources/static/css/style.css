@@ -369,10 +369,10 @@ mark {
     border-radius: var(--radius);
     padding: 16px;
     background: #0c1426;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
     gap: 10px;
-    flex-wrap: wrap;
 }
 
 .meta {

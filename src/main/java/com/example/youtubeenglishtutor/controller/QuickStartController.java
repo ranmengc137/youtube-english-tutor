@@ -51,11 +51,11 @@ public class QuickStartController {
                     picked.getTitle(),
                     "Everyday English",
                     "≤ 8 minutes"
-            ), "Up next: quiz after video", model);
+            ), "Up next: quiz after video", model, 5);
         }
         log.info("Quick start (EVERYDAY): catalog pool empty, using fallback sample");
         QuickStartVideo fallback = pickOne(sampleEverydayEnglish());
-        return renderWatch(fallback, "Up next: quiz after video", model);
+        return renderWatch(fallback, "Up next: quiz after video", model, 5);
     }
 
     @GetMapping("/watch/ted")
@@ -68,11 +68,11 @@ public class QuickStartController {
                     picked.getTitle(),
                     "TED",
                     "10–15 minutes"
-            ), "Up next: quiz after video", model);
+            ), "Up next: quiz after video", model, 10);
         }
         log.info("Quick start (TED): catalog pool empty, using fallback sample");
         QuickStartVideo fallback = pickOne(sampleTed());
-        return renderWatch(fallback, "Up next: quiz after video", model);
+        return renderWatch(fallback, "Up next: quiz after video", model, 10);
     }
 
     @GetMapping("/watch")
@@ -96,7 +96,7 @@ public class QuickStartController {
                 picked.getTitle(),
                 categoryLabel,
                 durationLabel
-        ), "Up next: quiz after video", model);
+        ), "Up next: quiz after video", model, 10);
     }
 
     @GetMapping("/api/quick-start/prepare")
@@ -118,13 +118,14 @@ public class QuickStartController {
         return list.get(random.nextInt(list.size()));
     }
 
-    private String renderWatch(QuickStartVideo selected, String hint, Model model) {
+    private String renderWatch(QuickStartVideo selected, String hint, Model model, int defaultQuestionCount) {
         model.addAttribute("videoUrl", selected.videoUrl());
         model.addAttribute("videoTitle", selected.title());
         model.addAttribute("videoCategory", selected.category());
         model.addAttribute("videoDuration", selected.durationLabel());
         model.addAttribute("videoId", YoutubeUrlUtils.extractVideoId(selected.videoUrl()));
         model.addAttribute("hint", hint);
+        model.addAttribute("defaultQuestionCount", defaultQuestionCount);
         return "watch";
     }
 

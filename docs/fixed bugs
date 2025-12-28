@@ -1,0 +1,59 @@
+## Fixed Bugs Summary
+
+This document summarizes the issues identified and resolved during a debugging session.
+
+### 1. Original Bug: "Skip to quiz" redirects to history page (and other automatic redirects)
+
+**Symptoms:**
+*   Clicking "Skip to quiz" redirected to `/tests` (history page) instead of `/tests/{id}`.
+*   The page would automatically redirect after a few seconds (e.g., after pausing a video) to `/tests`, even without user interaction.
+*   The expected quiz page (`/tests/{id}`) for the specific video was not displayed.
+
+**Root Causes & Solutions:**
+*   **JavaScript Logic Flaw (Client-side):** The frontend JavaScript (`watch.html`) was calling `redirectToQuiz()` without an explicit `testId` argument, relying on a global variable which could be `null` or invalid.
+    *   **Solution:** `redirectToQuiz` was refactored to accept `testId` as an argument, with a robust guard (`if (typeof currentTestId !== 'number' || currentTestId <= 0)`) to prevent redirects with invalid IDs. All call sites were updated to pass `testId` explicitly.
+*   **Backend Transaction Race Condition (Server-side):** The asynchronous test creation (`TestService.createTest`) was not correctly wrapped in a database transaction. `testId` was sometimes returned to the frontend before the test was fully committed, causing a subsequent lookup to fail and trigger a server-side redirect to `/tests`.
+    *   **Solution:** The `@Transactional` annotation in `TestService` was correctly moved to wrap the entire `createTest` logic, ensuring atomicity and visibility of new test records.
+*   **ThreadLocal Context Propagation (Server-side):** The `learnerId` (user identifier) was lost in the `CompletableFuture`'s background thread during test creation. Tests were saved with a `null` `learnerId`. When `TestController.takeTest` tried to retrieve the test, it couldn't find a match for the session's valid `learnerId`, causing a redirect to `/tests`.
+    *   **Solution:** `LearnerContext` was correctly injected into `QuickStartPreparationService`, and the `learnerId` was explicitly captured and set in the `CompletableFuture`'s thread context before test creation.
+
+### 2. New Requirement: Controlled Redirects and End-of-Video Choice
+
+**Symptoms:**
+*   Unwanted automatic redirects to quiz page when quiz was ready.
+*   No user choice after a video ended (automatic redirect to quiz).
+
+**Root Causes & Solutions:**
+*   **Automatic Redirect Logic (Client-side):** The `pollStatus` function in `watch.html` automatically redirected as soon as a quiz was ready.
+    *   **Solution:** The frontend JavaScript (`watch.html`) was refactored to:
+        *   Remove automatic redirects from `pollStatus`.
+        *   Implement an "end-of-video" choice modal (allowing "Watch Again" or "Take Quiz").
+        *   Use a `skipTriggered` flag to only redirect automatically if the "Skip to quiz" button was explicitly clicked.
+
+### 3. "Question number change causes `yt-dlp` failure" (Backend Error)
+
+**Symptoms:**
+*   Changing the question count dropdown on the `watch` page (and triggering a new preparation) resulted in a `java.lang.IllegalStateException: No SRT transcript produced by yt-dlp` error in backend logs.
+*   Frontend displayed a generic "Could not prepare quiz" message.
+
+**Root Causes & Solutions:**
+*   **Backend Race Condition for `yt-dlp` (Server-side):** The frontend was triggering new quiz preparations without canceling previous ones. Multiple concurrent `yt-dlp` calls for the same video could conflict, causing failures.
+    *   **Solution:** A locking mechanism (`ConcurrentHashMap` of locks) was implemented in `TestService.fetchOrReuseTranscript` to synchronize `yt-dlp` calls per video URL, ensuring only one `yt-dlp` process runs for a given video at a time.
+*   **Generic Error Message (Client-side):** The UI provided unhelpful feedback for `yt-dlp` failures.
+    *   **Solution:** The frontend (`watch.html`) was modified to display the specific `json.error` message from the backend, providing informative feedback like "Error: Failed to fetch transcript via yt-dlp".
+
+### 4. Navigating to `/start-instantly` causes database/template errors
+
+**Symptoms:**
+*   Accessing `/start-instantly` resulted in `org.postgresql.util.PSQLException: ERROR: operator does not exist: text ~~ bytea`. This was a database error during catalog browsing.
+*   Later, this was followed by `org.thymeleaf.exceptions.TemplateProcessingException` due to a parsing error in `start-instantly.html`.
+
+**Root Causes & Solutions:**
+*   **Database Query Parameter Type Mismatch (Server-side):** The error `text ~~ bytea` occurred in the catalog browsing query (`CatalogVideoRepository.browse`). This was due to a very subtle interaction where the JDBC driver was misinterpreting the `String` search parameter for the `LIKE` clause as a `bytea` type, possibly due to redundant `lower()` calls.
+    *   **Solution:** The query in `CatalogVideoRepository.java` was simplified. The `toLowerCase()` conversion was moved entirely to the `VideoCatalogService` layer. The query was changed to `v.title ilike :q` (using PostgreSQL's case-insensitive `ILIKE` operator) with the wildcards (`%`) prepended and appended to the search term in the service layer before passing it to the repository. This removed ambiguity from the query, preventing the type error.
+*   **Thymeleaf Template Parsing Error (Client-side):** The `start-instantly.html` template contained a complex and incorrectly formatted expression for displaying video duration (`th:text="${(v.durationSeconds != null ? (v.durationSeconds/60) : 0)} + 'm'"`), leading to `TemplateProcessingException`.
+    *   **Solution:** The problematic Thymeleaf expression was corrected using Text Inlining (`th:text="|${v.durationSeconds != null ? v.durationSeconds/60 : 0}m|"`) to explicitly handle the string literal concatenation, resolving the parsing error and allowing the page to render correctly.
+
+---
+**Date:** 2025-12-23
+**Agent:** Gemini-Code-Assist
