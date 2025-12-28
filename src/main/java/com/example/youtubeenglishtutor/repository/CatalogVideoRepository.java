@@ -4,6 +4,8 @@ import com.example.youtubeenglishtutor.entity.CatalogCategory;
 import com.example.youtubeenglishtutor.entity.CatalogVideo;
 import java.time.LocalDateTime;
 import java.util.Optional;
+
+import com.example.youtubeenglishtutor.service.DifficultyLevel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -32,7 +34,7 @@ public interface CatalogVideoRepository extends JpaRepository<CatalogVideo, Long
               and (:category is null or v.category = :category)
               and (:difficulty is null or v.difficulty = :difficulty)
               and (:maxSeconds is null or v.durationSeconds <= :maxSeconds)
-              and (:q is null or lower(v.title) like concat('%', :q, '%'))
+              and (:q is null or v.title ilike :q)
             order by v.refreshedAt desc nulls last, v.createdAt desc
             """)
     Page<CatalogVideo> browse(

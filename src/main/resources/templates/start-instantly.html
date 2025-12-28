@@ -59,13 +59,13 @@
 
         <div class="thumb-grid">
             <a class="thumb-card" th:each="v : ${videos}" th:href="@{'/watch?id=' + ${v.id}}">
-                <div class="thumb-img" th:style="${v.thumbnailUrl != null} ? 'background-image:url(''' + ${v.thumbnailUrl} + ''');' : ''"></div>
+                <div class="thumb-img" th:style="${v.thumbnailUrl != null ? 'background-image:url(' + v.thumbnailUrl + ')' : ''}"></div>
                 <div class="thumb-body">
                     <div class="thumb-title" th:text="${v.title}">Video title</div>
                     <div class="thumb-meta">
                         <span th:text="${v.category}">CATEGORY</span>
                         <span> • </span>
-                        <span th:text="${(v.durationSeconds != null ? (v.durationSeconds/60) : 0)} + 'm'}">10m</span>
+                        <span th:text="|${v.durationSeconds != null ? v.durationSeconds/60 : 0}m|">10m</span>
                         <span> • Captions</span>
                     </div>
                     <div class="meta">
@@ -160,5 +160,20 @@
         </div>
     </div>
 </div>
+<script>
+    const form = document.querySelector('form.filter-bar');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+            let alertMsg = 'Submitting with parameters:\\n';
+            for (const [key, value] of formData.entries()) {
+                alertMsg += `${key}: ${value}\\n`;
+            }
+            alert(alertMsg);
+            form.submit();
+        });
+    }
+</script>
 </body>
 </html>

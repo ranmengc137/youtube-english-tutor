@@ -2,6 +2,7 @@ package com.example.youtubeenglishtutor.controller;
 
 import com.example.youtubeenglishtutor.entity.CatalogCategory;
 import com.example.youtubeenglishtutor.entity.CatalogVideo;
+import com.example.youtubeenglishtutor.service.DifficultyLevel;
 import com.example.youtubeenglishtutor.service.VideoCatalogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
