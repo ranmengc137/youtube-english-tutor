@@ -364,15 +364,24 @@ mark {
     margin-bottom: 16px;
 }
 
-.instant-card {
+.home-feature-card {
+    display: flex !important;
+    flex-direction: row; /* Explicitly set row */
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 16px;
     background: #0c1426;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 10px;
+}
+
+.home-feature-card__text {
+    flex: 1 1 auto; /* Allow text to grow and shrink */
+}
+
+.home-feature-card__action {
+    flex: 0 0 160px; /* Force the action button container to be 160px wide */
 }
 
 .meta {

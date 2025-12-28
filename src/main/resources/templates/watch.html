@@ -30,12 +30,12 @@
                 </div>
             </div>
             <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-                <select class="input" id="questionCount" style="width:180px;">
+                <select class="input watch-control-input" id="questionCount">
                     <option value="5" th:selected="${defaultQuestionCount == 5}">5 questions</option>
                     <option value="10" th:selected="${defaultQuestionCount == 10}">10 questions</option>
                     <option value="15" th:selected="${defaultQuestionCount == 15}">15 questions</option>
                 </select>
-                <button class="button secondary" type="button" id="skipToQuizBtn">Skip to quiz</button>
+                <button class="button" type="button" id="skipToQuizBtn">Skip to quiz</button>
             </div>
         </div>
 

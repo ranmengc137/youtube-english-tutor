@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>YouTube English Tutor</title>
-    <link rel="stylesheet" th:href="@{/css/style.css(v=6)}">
+    <link rel="stylesheet" th:href="@{/css/style.css(v=7)}">
 </head>
 <body>
 <div class="page">
@@ -35,8 +35,8 @@
                             <p class="muted">Everyday English (finish in 5–8 minutes) or Random TED (10–15 minutes). Always captioned.</p>
                         </div>
                     </div>        <div class="instant-grid">
-            <div class="instant-card">
-                <div>
+            <div class="home-feature-card">
+                <div class="home-feature-card__text">
                     <p class="pill">Everyday English Clips</p>
                     <h3>Finish in 5–8 minutes</h3>
                     <p class="muted">Micro-learning clips to build listening + real-life phrases fast.</p>
@@ -46,10 +46,12 @@
                         <span class="badge">Captions on</span>
                     </div>
                 </div>
-                <a href="/watch/everyday" class="button secondary home-surprise">Surprise me</a>
+                <div class="home-feature-card__action">
+                    <a href="/watch/everyday" class="button secondary home-surprise">Surprise me</a>
+                </div>
             </div>
-            <div class="instant-card">
-                <div>
+            <div class="home-feature-card">
+                <div class="home-feature-card__text">
                     <p class="pill">Random TED</p>
                     <h3>TED shorts, 10–15 minutes</h3>
                     <p class="muted">Clear delivery + strong structure for focused practice.</p>
@@ -59,7 +61,9 @@
                         <span class="badge">Captions on</span>
                     </div>
                 </div>
-                <a href="/watch/ted" class="button secondary home-ted">Shuffle a TED</a>
+                <div class="home-feature-card__action">
+                    <a href="/watch/ted" class="button secondary home-ted">Shuffle a TED</a>
+                </div>
             </div>
         </div>
     </div>
