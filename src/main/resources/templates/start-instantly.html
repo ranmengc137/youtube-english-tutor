@@ -59,7 +59,7 @@
 
         <div class="thumb-grid">
             <a class="thumb-card" th:each="v : ${videos}" th:href="@{'/watch?id=' + ${v.id}}">
-                <div class="thumb-img" th:style="${v.thumbnailUrl != null ? 'background-image:url(' + v.thumbnailUrl + ')' : ''}"></div>
+                <div class="thumb-img" th:attrappend="style=${v.thumbnailUrl != null ? 'background-image: url(' + v.thumbnailUrl + ')' : ''}"></div>
                 <div class="thumb-body">
                     <div class="thumb-title" th:text="${v.title}">Video title</div>
                     <div class="thumb-meta">
@@ -76,7 +76,7 @@
                 </div>
             </a>
             <a class="thumb-card" th:each="s : ${sampleVideos}" th:if="${#lists.isEmpty(videos)}" href="#">
-                <div class="thumb-img" th:style="'background-image:url(''' + ${s.thumbnail} + ''');'"></div>
+                <div class="thumb-img" th:attrappend="style=${s.thumbnail != null ? 'background-image: url(' + s.thumbnail + ')' : ''}"></div>
                 <div class="thumb-body">
                     <div class="thumb-title" th:text="${s.title}">Sample title</div>
                     <div class="thumb-meta">
